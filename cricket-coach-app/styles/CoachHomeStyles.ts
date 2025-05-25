@@ -22,7 +22,7 @@ export const styles = StyleSheet.create({
 	},
 	name: {
 		marginTop: 30,
-		fontSize: 16,
+		fontSize: 20,
 		marginRight: 10,
 		fontWeight: "bold",
 		color: "#111827",

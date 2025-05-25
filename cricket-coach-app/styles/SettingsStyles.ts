@@ -4,18 +4,19 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-    padding: 20,
   },
   closeButton: {
     alignSelf: 'flex-end',
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#111827',
-    marginTop: 20,
-    marginBottom: 20,
+    padding: 10,
+    marginHorizontal: 16, // equal space left and right
+    marginVertical: 10, // equal space top and bottom
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    overflow: "hidden",
+    elevation: 2,
+    alignSelf: "center", // centers item inside FlatList/Grid
   },
   placeholder: {
     fontSize: 16,

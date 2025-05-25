@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, Image, Dimensions } from 'react-native';
 import { styles } from '../styles/AllPicturesStyles';
+import Header from './Header_1';
 
 const pictureData = [
   { id: '1', image: require('../assets/images/cricket.jpg') },
@@ -17,7 +18,7 @@ const itemSize = screenWidth / numColumns - 30;
 const AllPicturesScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>All Pictures</Text>
+     <Header title='All Pictures'/>
       <FlatList
         data={pictureData}
         keyExtractor={(item) => item.id}

@@ -1,75 +1,81 @@
-import { StyleSheet } from "react-native"
+import { StyleSheet, Dimensions } from "react-native";
+
+const { width } = Dimensions.get("window");
+const numColumns = 2;
+const itemMargin = 20;
+const itemWidth = (width - itemMargin * (numColumns + 1)) / numColumns;
 
 export const styles = StyleSheet.create({
-	container: {
-		padding: 20,
-		backgroundColor: "#F9FAFB",
-	},
-	gridItem: {
-		backgroundColor: "#ffffff",
-		paddingVertical: 20,
-		paddingHorizontal: 10,
-		borderRadius: 12,
-		alignItems: "center",
-		justifyContent: "center",
-		shadowColor: "#000",
-		shadowOpacity: 0.05,
-		shadowOffset: { width: 0, height: 2 },
-		shadowRadius: 4,
-		elevation: 3,
-	},
-	header: {
-		alignItems: "center",
-		marginBottom: 30,
-	},
-	title: {
-		fontSize: 22,
-		fontWeight: "bold",
-		marginTop: 8,
-		color: "#111827",
-	},
-	item: {
-		flexDirection: "row",
-		alignItems: "center",
-		backgroundColor: "#fff",
-		padding: 15,
-		borderRadius: 10,
-		marginBottom: 12,
-		shadowColor: "#000",
-		shadowOpacity: 0.03,
-		shadowOffset: { width: 0, height: 2 },
-		shadowRadius: 4,
-	},
-	itemText: {
-		marginLeft: 12,
-		fontSize: 16,
-		color: "#111827",
-		fontWeight: "500",
-	},
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
 
-	overlay: {
-		position: "absolute",
-		bottom: 0,
-		width: "100%",
-		backgroundColor: "rgba(29,78,216, 0.5)", // semi-transparent black
-		paddingVertical: 4,
-	},
+  // Header with back and title
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#1D3557",
+    marginLeft: 10,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
 
-	overlayText: {
-		color: "#fff",
-		fontSize: 13,
-		textAlign: "center",
-		fontWeight: "600",
-	},
-	imageContainer: {
-		flex: 1,
-		position: "relative",
-		width: "100%",
-		height: "100%",
-	},
+  // Grid styles
+  listContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  imageWrapper: {
+    width: itemWidth,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 10,
+    padding: 10,
+    alignItems: "center",
+    marginBottom: itemMargin,
+  },
+  image: {
+    width: "100%",
+    height: itemWidth,
+    borderRadius: 8,
+  },
+  studentName: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
 
-	studentImage: {
-		width: "100%",
-		height: "100%",
-	},
-})
+  // Buttons
+  buttonContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    gap: 12,
+  },
+  button: {
+    backgroundColor: "#E0E7FF",
+    borderRadius: 10,
+    paddingVertical: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1D3557",
+  },
+});

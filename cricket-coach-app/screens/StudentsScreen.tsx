@@ -1,105 +1,85 @@
-import { Feather } from "@expo/vector-icons"
-import React from "react"
+import React, { useState } from "react";
 import {
-	Dimensions,
-	FlatList,
-	Image,
-	ScrollView,
-	Text,
-	TouchableOpacity,
-	View,
-} from "react-native"
-import { styles } from "../styles/StudentsStyles"
-
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { Entypo, Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { styles } from "../styles/StudentsStyles";
+import Header from "./Header_1";
 type Student = {
-	id: string
-	name: string
-	photoUrl: string
-}
+  id: string;
+  name: string;
+  photoUrl: string;
+};
 
-const students: Student[] = [
-	{
-		id: "1",
-		name: "Andy",
-		photoUrl: "https://picsum.photos/200/300",
-	},
-	{
-		id: "2",
-		name: "Brian",
-		photoUrl: "https://picsum.photos/200/300",
-	},
-	{
-		id: "3",
-		name: "Josh",
-		photoUrl: "https://picsum.photos/200/300",
-	},
-	// Add more...
-]
-
-const { width } = Dimensions.get("window")
-const numColumns = 2
-const itemMargin = 20
-const itemWidth = (width - itemMargin * (numColumns + 1)) / numColumns
+const initialStudents: Student[] = [
+  { id: "1", name: "Andy", photoUrl: "https://picsum.photos/200/300" },
+  { id: "2", name: "Brian", photoUrl: "https://picsum.photos/200/300" },
+  { id: "3", name: "Josh", photoUrl: "https://picsum.photos/200/300" },
+];
 
 const StudentsScreen = () => {
-	const renderItem = ({ item }: { item: Student }) => (
-		<TouchableOpacity
-			style={{
-				width: itemWidth,
-				aspectRatio: 1, // Square shape
-			}}
-		>
-			<View style={styles.imageContainer}>
-				<Image
-					source={{ uri: item.photoUrl }}
-					style={styles.studentImage}
-					resizeMode="cover"
-				/>
-				<View style={styles.overlay}>
-					<Text style={styles.overlayText}>{item.name}</Text>
-				</View>
-			</View>
-		</TouchableOpacity>
-	)
+  const [students, setStudents] = useState<Student[]>(initialStudents);
+  const router = useRouter();
 
-	return (
-		<ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container}>
-			{/* <View style={styles.header}>
-				<Feather name="user" size={50} color="#1D4ED8" />
-				<Text style={styles.title}>Students</Text>
-			</View> */}
+  const addStudent = () => {
+    const newStudent: Student = {
+      id: (students.length + 1).toString(),
+      name: `New ${students.length + 1}`,
+      photoUrl: "https://picsum.photos/200/300",
+    };
+    setStudents((prev) => [...prev, newStudent]);
+  };
 
-			{/* {students.map((student, index) => (
-				<TouchableOpacity key={index} style={styles.item}>
-					<FontAwesome name="user" size={20} color="#111827" />
-					<Text style={styles.itemText}>{student}</Text>
-				</TouchableOpacity>
-			))} */}
+  const removeStudent = () => {
+    setStudents((prev) => prev.slice(0, -1));
+  };
 
-			<FlatList
-				data={students}
-				renderItem={renderItem}
-				keyExtractor={(item, index) => index.toString()}
-				numColumns={numColumns}
-				columnWrapperStyle={{
-					justifyContent: "space-between",
-					marginBottom: itemMargin,
-				}}
-				showsVerticalScrollIndicator={false}
-				contentContainerStyle={{ paddingBottom: 20 }}
-			/>
+  const renderItem = ({ item }: { item: Student }) => (
+    <View style={styles.imageWrapper}>
+      <Image
+        source={{ uri: item.photoUrl }}
+        style={styles.image}
+        resizeMode="cover"
+      />
+      <Text style={styles.studentName}>{item.name}</Text>
+    </View>
+  );
 
-			<TouchableOpacity style={styles.item}>
-				<Feather name="user-plus" size={20} color="#111827" />
-				<Text style={styles.itemText}>Add Student</Text>
-			</TouchableOpacity>
+  return (
+   <View style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
+      <Header title="Students" />
 
-			<TouchableOpacity style={styles.item}>
-				<Feather name="settings" size={20} color="#111827" />
-				<Text style={styles.itemText}>Settings</Text>
-			</TouchableOpacity>
-		</ScrollView>
-	)
-}
+      {/* Student Grid */}
+      <FlatList
+        data={students}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={{ justifyContent: "space-between" }}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+      />
 
-export default StudentsScreen
+      {/* Action Buttons */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={addStudent} style={styles.button}>
+          <Feather name="user-plus" size={20} color="#1D3557" />
+          <Text style={styles.buttonText}>Add Student</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={removeStudent} style={styles.button}>
+          <Feather name="user-minus" size={20} color="#1D3557" />
+          <Text style={styles.buttonText}>Remove Student</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default StudentsScreen;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, Image, Dimensions } from 'react-native';
 import { styles } from '../styles/AllVideosStyles';
-
+import Header from './Header_1';
 const videoData = [
   { id: '1', thumbnail: require('../assets/videos/video.mp4') },
   { id: '2', thumbnail: require('../assets/videos/video.mp4') },
@@ -17,7 +17,7 @@ const itemSize = screenWidth / numColumns - 30;
 const AllVideosScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>All Videos</Text>
+     <Header title='All Videos'/>
       <FlatList
         data={videoData}
         keyExtractor={(item) => item.id}

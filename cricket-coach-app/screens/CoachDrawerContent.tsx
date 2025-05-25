@@ -1,97 +1,116 @@
-import {
-	DrawerContentComponentProps,
-	DrawerContentScrollView,
-} from "@react-navigation/drawer"
-import { useNavigation } from "@react-navigation/native"
-import React from "react"
-import { Image, Text, TouchableOpacity, View } from "react-native"
-import { styles } from "../styles/CoachDrawerStyles"
+import React from "react";
+import { View, Text, TouchableOpacity, Image } from "react-native";
+import { DrawerContentComponentProps } from "@react-navigation/drawer";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { styles } from "../styles/CoachDrawerStyles";
+import { router } from "expo-router";
 
-import { Entypo, Feather, FontAwesome5 } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
+const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
+  navigation,
+}) => {
+  const handleNavigate = (screen: string) => {
+    console.log("navigate", screen);
+    navigation.navigate(screen as never);
+  };
 
-const CoachDrawerContent = (props: DrawerContentComponentProps) => {
-	const navigation = useNavigation()
-	const router = useRouter()
+  function handleHome(): void {
+    router.push("/coachhome");
+  }
+  function handlePersonalInfo(): void {
+    router.push("/coach-home/PersonalInfoScreen");
+  }
+  function handleAllPicture(): void {
+    router.push("/coach-home/AllPictureScreen");
+  }
+  function handleAllvideos(): void {
+    router.push("/coach-home/AllVideoScreen");
+  }
+  function handleFavourite(): void {
+    router.push("/coach-home/FavouriteScreen");
+  }
+  function handleSetting(): void {
+    router.push("/coach-home/SettingScreen");
+  }
+  function handleStudent(): void {
+    router.push("/coach-home/StudentScreen");
+  }
+  return (
+    <View style={styles.container}>
+      <View style={styles.profileContainer}>
+        <Image
+          source={require("../assets/images/boy.png")}
+          style={styles.profileImage}
+        />
+        <Text style={styles.coachName}>Archit</Text>
+        <TouchableOpacity>
+          <View style={styles.editImageContainer}>
+            <Feather name="edit" size={16} color="#1D4ED8" />
+            <Text style={styles.editImageText}>Edit Image</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
 
-	const handleNavigate = (screenName: string) => {
-		console.log("navigate students")
-		// router.push(`/${screenName}`)
-		//navigation.navigate(screenName as never) // 'as never' avoids TS errors for now
-	}
+      {/* Menu Items */}
+      <TouchableOpacity onPress={() => handleHome()} style={styles.menuItem}>
+        <Feather name="user" size={20} color="#1D4ED8" />
+        <Text style={styles.menuText}>Home</Text>
+      </TouchableOpacity>
 
-	function handleLogout(): void {
-		router.replace("/")
-	}
+      <TouchableOpacity
+        onPress={() => handlePersonalInfo()}
+        style={styles.menuItem}
+      >
+        <Feather name="user" size={20} color="#1D4ED8" />
+        <Text style={styles.menuText}>Personal Information</Text>
+      </TouchableOpacity>
 
-	return (
-		<DrawerContentScrollView contentContainerStyle={styles.drawerContent}>
-			<View style={styles.profileSection}>
-				<Image
-					source={require("../assets/images/boy.png")}
-					style={styles.profileImage}
-				/>
-				<Text style={styles.coachName}>Coach Mit</Text>
-				<Text style={styles.coachRole}>Head Coach</Text>
-			</View>
+      <TouchableOpacity onPress={() => handleStudent()} style={styles.menuItem}>
+        <Feather name="users" size={20} color="#1D4ED8" />
+        <Text style={styles.menuText}>Students</Text>
+      </TouchableOpacity>
 
-			<TouchableOpacity
-				onPress={() => handleNavigate("PersonalInfo")}
-				style={styles.menuItem}
-			>
-				<FontAwesome5 name="user" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>Personal Information</Text>
-			</TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => handleAllvideos()}
+        style={styles.menuItem}
+      >
+        <Feather name="video" size={20} color="#1D4ED8" />
+        <Text style={styles.menuText}>All Videos</Text>
+      </TouchableOpacity>
 
-			<TouchableOpacity
-				onPress={() => handleNavigate("Students")}
-				style={styles.menuItem}
-			>
-				<FontAwesome5 name="graduation-cap" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>Students</Text>
-			</TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => handleAllPicture()}
+        style={styles.menuItem}
+      >
+        <Feather name="image" size={20} color="#1D4ED8" />
+        <Text style={styles.menuText}>All Pictures</Text>
+      </TouchableOpacity>
 
-			<TouchableOpacity
-				onPress={() => handleNavigate("AllVideos")}
-				style={styles.menuItem}
-			>
-				<Entypo name="video" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>All Videos</Text>
-			</TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => handleFavourite()}
+        style={styles.menuItem}
+      >
+        <Feather name="heart" size={20} color="#1D4ED8" />
+        <Text style={styles.menuText}>Favourites</Text>
+      </TouchableOpacity>
 
-			<TouchableOpacity
-				onPress={() => handleNavigate("AllPictures")}
-				style={styles.menuItem}
-			>
-				<Entypo name="image" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>All Pictures</Text>
-			</TouchableOpacity>
+      <TouchableOpacity onPress={() => handleSetting()} style={styles.menuItem}>
+        <Feather name="settings" size={20} color="#1D4ED8" />
+        <Text style={styles.menuText}>Settings</Text>
+      </TouchableOpacity>
 
-			<TouchableOpacity
-				onPress={() => handleNavigate("Favourites")}
-				style={styles.menuItem}
-			>
-				<FontAwesome5 name="heart" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>Favourites</Text>
-			</TouchableOpacity>
+      {/* Logout */}
+      <TouchableOpacity
+        onPress={() => {
+          console.log("Logging out...");
+          router.replace("/signin"); // 👈 redirects to signin screen
+        }}
+        style={styles.logoutItem}
+      >
+        <MaterialIcons name="logout" size={20} color="#DC2626" />
+        <Text style={styles.logoutText}>Logout</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
-			<TouchableOpacity
-				onPress={() => handleNavigate("Settings")}
-				style={styles.menuItem}
-			>
-				<Feather name="settings" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>Settings</Text>
-			</TouchableOpacity>
-
-			<TouchableOpacity
-				onPress={() => handleLogout()} // You need to define this function
-				style={styles.menuItem}
-			>
-				<Feather name="log-out" size={20} color="red" />
-				<Text style={[styles.menuText, { color: "red" }]}>Logout</Text>
-			</TouchableOpacity>
-		</DrawerContentScrollView>
-	)
-}
-
-export default CoachDrawerContent
+export default CoachDrawerContent;

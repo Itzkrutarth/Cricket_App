@@ -49,7 +49,7 @@ export default function SignInScreen() {
 				/>
 
 				<TouchableOpacity style={styles.button} onPress={handleLogin}>
-					<Text style={styles.buttonText}>Login Account</Text>
+					<Text style={styles.buttonText}>Login</Text>
 				</TouchableOpacity>
 
 				<View style={styles.rightAlignRow}>

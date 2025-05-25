@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, Image, Dimensions } from 'react-native';
 import { styles } from '../styles/FavouritesStyles';
-
+import Header from './Header_1';
 const favouriteData = [
   { id: '1', image: require('../assets/images/cricket.jpg') },
   { id: '2', image: require('../assets/images/cricket.jpg') },
@@ -17,7 +17,7 @@ const itemSize = screenWidth / numColumns - 30;
 const FavouritesScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Favourites</Text>
+      <Header title='Favourites' />
       <FlatList
         data={favouriteData}
         keyExtractor={(item) => item.id}

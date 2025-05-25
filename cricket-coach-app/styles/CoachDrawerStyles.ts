@@ -1,13 +1,14 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-  drawerContent: {
+  container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
+    paddingHorizontal: 20,
+    paddingTop: 40,
   },
-  profileSection: {
-    alignItems: 'center',
+  profileContainer: {
+    alignItems: "center",
     marginBottom: 30,
   },
   profileImage: {
@@ -18,42 +19,42 @@ export const styles = StyleSheet.create({
   },
   coachName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontWeight: "bold",
+    color: "#1F2937",
   },
-  coachRole: {
+  editImageContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  editImageText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#1D4ED8",
+    marginLeft: 4,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#ccc',
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
   menuText: {
-    marginLeft: 15,
+    marginLeft: 10,
     fontSize: 16,
-    color: '#1D4ED8',
+    color: "#1D4ED8",
   },
-  editRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  marginTop: 5,
-},
-
-editImage: {
-  fontSize: 14,
-  color: "#1D4ED8",
-  marginLeft: 5,
-},
-
-logout: {
-  color: "red",
-  fontWeight: "bold",
-  marginTop: 30,
-  marginLeft: 20,
-},
-
+  logoutItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  logoutText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#DC2626",
+  },
 });

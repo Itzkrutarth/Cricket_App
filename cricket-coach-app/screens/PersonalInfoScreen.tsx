@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, Image, ScrollView } from 'react-native';
 import { styles } from '../styles/PersonalInfoStyles';
-
+import Header from './Header_1';
 const PersonalInfoScreen = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Header title='Personal Information' />
       <View style={styles.profileSection}>
         <Image
           source={require('../assets/images/boy.png')}
