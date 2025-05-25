@@ -7,7 +7,6 @@ export const styles = StyleSheet.create({
 	},
 	header: {
 		flexDirection: "row",
-		justifyContent: "space-between",
 		paddingHorizontal: 20,
 		alignItems: "center",
 	},
@@ -19,6 +18,7 @@ export const styles = StyleSheet.create({
 	profile: {
 		flexDirection: "row",
 		alignItems: "center",
+		marginRight: 8,
 	},
 	name: {
 		marginTop: 30,

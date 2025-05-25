@@ -1,10 +1,24 @@
-export function validateSignUp(data) {
-	const errors = {}
+interface SignUpData {
+	name: string
+	username: string
+	email: string
+	gender: string
+	phoneNumber: string
+	birthDate: string
+	role: string
+	password: string
+	confirmPassword: string
+}
+
+export function validateSignUp(data: SignUpData): Record<string, string> | null {
+	const errors: Record<string, string> = {}
+
 	const {
 		name,
 		username,
 		email,
 		gender,
+		phoneNumber,
 		birthDate,
 		role,
 		password,
@@ -19,10 +33,17 @@ export function validateSignUp(data) {
 		errors.username =
 			"Username can only contain letters, numbers, and underscores."
 	}
+
 	if (!email || !email.trim()) {
 		errors.email = "Email is required."
 	} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 		errors.email = "Invalid email format."
+	}
+
+	if (!phoneNumber.trim()) {
+		errors.phoneNumber = "Phone number is required."
+	} else if (!/^\d{10}$/.test(phoneNumber)) {
+		errors.phoneNumber = "Phone number must be exactly 10 digits."
 	}
 
 	if (!birthDate.trim()) {
@@ -34,7 +55,6 @@ export function validateSignUp(data) {
 	if (!role.trim()) errors.role = "Role must be selected."
 	if (!gender.trim()) errors.gender = "Gender must be selected."
 
-	// Password Validation: collect all relevant messages
 	let passwordErrors = []
 	if (!password) {
 		passwordErrors.push("Password is required.")
