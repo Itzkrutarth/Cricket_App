@@ -1,4 +1,4 @@
-import { AntDesign, FontAwesome } from "@expo/vector-icons"
+import { AntDesign } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import React, { useState } from "react"
 import { Text, TextInput, TouchableOpacity, View } from "react-native"
@@ -65,15 +65,14 @@ export default function SignInScreen() {
 					</Text>
 				) : null}
 
-				<Text style={styles.orText}>Or Login with</Text>
+				<Text style={styles.orText}>Or</Text>
 				<View style={styles.socialRow}>
-					<TouchableOpacity style={styles.socialButton}>
-						<AntDesign name="google" size={24} color="#DB4437" />
-						<Text style={styles.socialText}>Google</Text>
-					</TouchableOpacity>
-					<TouchableOpacity style={styles.socialButton}>
-						<FontAwesome name="facebook" size={24} color="#1877F2" />
-						<Text style={styles.socialText}>Facebook</Text>
+					<TouchableOpacity
+						style={styles.socialButton}
+						onPress={() => router.push("/phonelogin")}
+					>
+						<AntDesign name="mobile1" size={24} color="#1D4ED8" />
+						<Text style={styles.socialText}>Login with Phone Number</Text>
 					</TouchableOpacity>
 				</View>
 			</View>

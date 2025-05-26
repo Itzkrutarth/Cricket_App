@@ -24,6 +24,7 @@ const HomeContent = () => {
 						style={styles.profileImage}
 					/>
 				</View>
+				<Text>Hello Coach</Text>
 			</View>
 
 			{/* Stats */}

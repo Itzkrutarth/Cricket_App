@@ -3,6 +3,7 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker"
 import { useRouter } from "expo-router"
 import React, { useState } from "react"
+
 import {
 	Alert,
 	Image,
@@ -17,7 +18,6 @@ import {
 	TouchableWithoutFeedback,
 	View,
 } from "react-native"
-import { validateSignUp } from "../js/signupValidation"
 import { styles } from "../styles/SignUpStyles"
 
 import * as ImagePicker from "expo-image-picker"
@@ -29,6 +29,7 @@ export default function SignUpScreen() {
 	const [name, setName] = useState("")
 	const [username, setUsername] = useState("")
 	const [birthDate, setBirthDate] = useState("")
+	const [phoneNumber, setPhoneNumber] = useState("")
 	const [showDatePicker, setShowDatePicker] = useState(false)
 	const [password, setPassword] = useState("")
 	const [gender, setGender] = useState("")
@@ -36,12 +37,13 @@ export default function SignUpScreen() {
 	const [email, setEmail] = useState("")
 	const [image, setImage] = useState<string | null>(null)
 	const [role, setRole] = useState("")
-	const [error, setError] = useState({
+	const [error, setError] = useState<Record<string, string>>({
 		name: "",
 		birthDate: "",
 		email: "",
 		username: "",
 		gender: "",
+		phoneNumber: "",
 		role: "",
 		password: "",
 		confirmPassword: "",
@@ -57,7 +59,7 @@ export default function SignUpScreen() {
 		}
 		if (selectedDate) {
 			const formattedDate = selectedDate
-				.toLocaleDateString("en-US")
+				.toLocaleDateString("en-GB")
 				.replace(/\//g, "-") // "dd-mm-yyyy"
 			setBirthDate(formattedDate)
 		}
@@ -97,43 +99,96 @@ export default function SignUpScreen() {
 		])
 	}
 
-	const handleSignup = () => {
-		const validationErrors = validateSignUp({
+	// const handleSignup = async () => {
+	// 	const validationErrors = validateSignUp({
+	// 		name,
+	// 		username,
+	// 		email,
+	// 		birthDate,
+	// 		phoneNumber,
+	// 		role,
+	// 		password,
+	// 		gender,
+	// 		confirmPassword,
+	// 	})
+
+	// 	if (validationErrors) {
+	// 		setError(validationErrors)
+	// 		return
+	// 	}
+
+	// 	const userData = {
+	// 		name,
+	// 		email,
+	// 		phoneNumber,
+	// 		username,
+	// 		birthDate,
+	// 		role,
+	// 		gender,
+	// 		password,
+	// 	}
+
+	// 	try {
+	// 		const response = await fetch(
+	// 			"https://becomebetter-api.azurewebsites.net/api/signupUser",
+	// 			{
+	// 				method: "POST",
+	// 				headers: {
+	// 					"Content-Type": "application/json",
+	// 				},
+	// 				body: JSON.stringify(userData),
+	// 			}
+	// 		)
+
+	// 		if (!response.ok) {
+	// 			const errorText = await response.text()
+	// 			console.error("API Error:", errorText)
+	// 			Alert.alert("Signup Failed", errorText)
+	// 			return
+	// 		}
+
+	// 		const result = await response.json()
+	// 		console.log("Signup success:", result)
+	// 		Alert.alert("Success", result.message)
+	// 		router.replace("/coachhome")
+	// 	} catch (error) {
+	// 		console.error("Fetch error:", error)
+	// 		Alert.alert("Error", "Something went wrong. Try again.")
+	// 	}
+	// }
+	const handleSignup = async () => {
+		const userData = {
 			name,
-			username,
 			email,
+			phoneNumber,
+			username,
 			birthDate,
 			role,
-			password,
 			gender,
-			confirmPassword,
-		})
+			password,
+			confirmPassword, // you can include this for now; backend may ignore it
+		}
 
-		const hasErrors =
-			validationErrors &&
-			Object.values(validationErrors).some((msg) => msg !== "")
+		console.log("🔼 Sending userData:", userData)
 
-		if (validationErrors && typeof validationErrors === "object") {
-			setError(validationErrors)
-		} else {
-			console.log("Signup success!", { name, username, birthDate, role })
-			setError({
-				name: "",
-				birthDate: "",
-				username: "",
-				email: "",
-				role: "",
-				gender: "",
-				password: "",
-				confirmPassword: "",
-			})
-			setName("")
-			setUsername("")
-			setBirthDate("")
-			setGender("")
-			setPassword("")
-			setConfirmPassword("")
-			setRole("")
+		try {
+			const response = await fetch(
+				"https://becomebetter-api.azurewebsites.net/api/signupUser",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(userData),
+				}
+			)
+
+			const result = await response.text()
+			console.log("✅ Response from Azure:", result)
+			Alert.alert("Success", result)
+		} catch (error) {
+			console.error("❌ Error sending data:", error)
+			Alert.alert("Error", "Failed to send data")
 		}
 	}
 
@@ -216,6 +271,21 @@ export default function SignUpScreen() {
 						/>
 						{error.email ? (
 							<Text style={styles.error}>{error.email}</Text>
+						) : null}
+
+						<TextInput
+							style={styles.input}
+							placeholder="Phone Number (10 digits)"
+							placeholderTextColor="#6B7280"
+							keyboardType="number-pad"
+							maxLength={10}
+							value={phoneNumber}
+							onChangeText={(text) =>
+								setPhoneNumber(text.replace(/[^0-9]/g, ""))
+							}
+						/>
+						{error.phoneNumber ? (
+							<Text style={styles.error}>{error.phoneNumber}</Text>
 						) : null}
 
 						<TextInput
