@@ -23,7 +23,6 @@ import { styles } from "../styles/SignUpStyles"
 import * as ImagePicker from "expo-image-picker"
 
 import { Ionicons } from "@expo/vector-icons"
-import { validateSignUp } from "../js/signupValidation"
 
 export default function SignUpScreen() {
 	const router = useRouter()
@@ -100,24 +99,64 @@ export default function SignUpScreen() {
 		])
 	}
 
+	// const handleSignup = async () => {
+	// 	const validationErrors = validateSignUp({
+	// 		name,
+	// 		username,
+	// 		email,
+	// 		birthDate,
+	// 		phoneNumber,
+	// 		role,
+	// 		password,
+	// 		gender,
+	// 		confirmPassword,
+	// 	})
+
+	// 	if (validationErrors) {
+	// 		setError(validationErrors)
+	// 		return
+	// 	}
+
+	// 	const userData = {
+	// 		name,
+	// 		email,
+	// 		phoneNumber,
+	// 		username,
+	// 		birthDate,
+	// 		role,
+	// 		gender,
+	// 		password,
+	// 	}
+
+	// 	try {
+	// 		const response = await fetch(
+	// 			"https://becomebetter-api.azurewebsites.net/api/signupUser",
+	// 			{
+	// 				method: "POST",
+	// 				headers: {
+	// 					"Content-Type": "application/json",
+	// 				},
+	// 				body: JSON.stringify(userData),
+	// 			}
+	// 		)
+
+	// 		if (!response.ok) {
+	// 			const errorText = await response.text()
+	// 			console.error("API Error:", errorText)
+	// 			Alert.alert("Signup Failed", errorText)
+	// 			return
+	// 		}
+
+	// 		const result = await response.json()
+	// 		console.log("Signup success:", result)
+	// 		Alert.alert("Success", result.message)
+	// 		router.replace("/coachhome")
+	// 	} catch (error) {
+	// 		console.error("Fetch error:", error)
+	// 		Alert.alert("Error", "Something went wrong. Try again.")
+	// 	}
+	// }
 	const handleSignup = async () => {
-		const validationErrors = validateSignUp({
-			name,
-			username,
-			email,
-			birthDate,
-			phoneNumber,
-			role,
-			password,
-			gender,
-			confirmPassword,
-		})
-
-		if (validationErrors) {
-			setError(validationErrors)
-			return
-		}
-
 		const userData = {
 			name,
 			email,
@@ -127,7 +166,10 @@ export default function SignUpScreen() {
 			role,
 			gender,
 			password,
+			confirmPassword, // you can include this for now; backend may ignore it
 		}
+
+		console.log("🔼 Sending userData:", userData)
 
 		try {
 			const response = await fetch(
@@ -141,20 +183,12 @@ export default function SignUpScreen() {
 				}
 			)
 
-			if (!response.ok) {
-				const errorText = await response.text()
-				console.error("API Error:", errorText)
-				Alert.alert("Signup Failed", errorText)
-				return
-			}
-
-			const result = await response.json()
-			console.log("Signup success:", result)
-			Alert.alert("Success", result.message)
-			router.replace("/coachhome")
+			const result = await response.text()
+			console.log("✅ Response from Azure:", result)
+			Alert.alert("Success", result)
 		} catch (error) {
-			console.error("Fetch error:", error)
-			Alert.alert("Error", "Something went wrong. Try again.")
+			console.error("❌ Error sending data:", error)
+			Alert.alert("Error", "Failed to send data")
 		}
 	}
 

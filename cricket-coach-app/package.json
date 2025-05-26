@@ -11,6 +11,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@azure/cosmos": "^4.4.1",
     "@expo/vector-icons": "^14.1.0",
     "@react-native-community/datetimepicker": "^8.3.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
