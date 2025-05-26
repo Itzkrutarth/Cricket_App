@@ -9,7 +9,10 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-
+import { LogBox } from "react-native";
+LogBox.ignoreLogs([
+  "Text strings must be rendered within a <Text> component",
+]);
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({

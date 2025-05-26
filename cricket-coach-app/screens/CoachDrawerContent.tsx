@@ -17,7 +17,7 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
     router.push("/coachhome");
   }
   function handlePersonalInfo(): void {
-    router.push("/coach-home/PersonalInfoScreen");
+    router.push("/coach-home/personalinfo_screen");
   }
   function handleAllPicture(): void {
     router.push("/coach-home/AllPictureScreen");

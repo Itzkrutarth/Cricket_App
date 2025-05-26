@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
     color: "#111827",
   },
   item: {
+    marginTop:20,
     padding: 10,
     marginHorizontal: 16, // equal space left and right
     marginVertical: 10, // equal space top and bottom
