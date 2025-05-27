@@ -160,20 +160,17 @@ export default function SignUpScreen() {
 		const userData = {
 			name,
 			email,
-			phoneNumber,
 			username,
-			birthDate,
-			role,
-			gender,
 			password,
-			confirmPassword, // you can include this for now; backend may ignore it
+			phoneNumber,
+			gender,
+			role,
+			birthDate,
 		}
-
-		console.log("🔼 Sending userData:", userData)
 
 		try {
 			const response = await fetch(
-				"https://becomebetter-api.azurewebsites.net/api/signupUser",
+				"https://becomebetter-api.azurewebsites.net/api/SignUp",
 				{
 					method: "POST",
 					headers: {
@@ -183,12 +180,18 @@ export default function SignUpScreen() {
 				}
 			)
 
-			const result = await response.text()
-			console.log("✅ Response from Azure:", result)
-			Alert.alert("Success", result)
+			const resultText = await response.text()
+			console.log("📩 Response:", resultText)
+
+			if (response.ok) {
+				Alert.alert("✅ Signup Success", resultText)
+				router.replace("/coachhome") // or navigate to login
+			} else {
+				Alert.alert("❌ Signup Failed", resultText)
+			}
 		} catch (error) {
-			console.error("❌ Error sending data:", error)
-			Alert.alert("Error", "Failed to send data")
+			console.error("⚠️ Signup error:", error)
+			Alert.alert("Error", "Failed to connect to the server.")
 		}
 	}
 
