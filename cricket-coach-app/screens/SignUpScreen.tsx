@@ -1,9 +1,11 @@
 import DateTimePicker, {
 	DateTimePickerEvent,
 } from "@react-native-community/datetimepicker"
+import * as FileSystem from "expo-file-system"
+import * as ImageManipulator from "expo-image-manipulator"
+import * as ImagePicker from "expo-image-picker"
 import { useRouter } from "expo-router"
 import React, { useState } from "react"
-
 import {
 	Alert,
 	Image,
@@ -19,8 +21,6 @@ import {
 	View,
 } from "react-native"
 import { styles } from "../styles/SignUpStyles"
-
-import * as ImagePicker from "expo-image-picker"
 
 import { Ionicons } from "@expo/vector-icons"
 
@@ -66,38 +66,38 @@ export default function SignUpScreen() {
 		setShowDatePicker(false)
 	}
 
-	const handlePickImage = () => {
-		Alert.alert("Select Option", "Choose an image source", [
-			{
-				text: "Camera",
-				onPress: async () => {
-					const permission = await ImagePicker.requestCameraPermissionsAsync()
-					if (permission.granted) {
-						const result = await ImagePicker.launchCameraAsync({
-							mediaTypes: ImagePicker.MediaTypeOptions.Images,
-							quality: 1,
-						})
-						if (!result.canceled) setImage(result.assets[0].uri)
-					}
-				},
-			},
-			{
-				text: "Gallery",
-				onPress: async () => {
-					const permission =
-						await ImagePicker.requestMediaLibraryPermissionsAsync()
-					if (permission.granted) {
-						const result = await ImagePicker.launchImageLibraryAsync({
-							mediaTypes: ImagePicker.MediaTypeOptions.Images,
-							quality: 1,
-						})
-						if (!result.canceled) setImage(result.assets[0].uri)
-					}
-				},
-			},
-			{ text: "Cancel", style: "cancel" },
-		])
-	}
+	// const handlePickImage = () => {
+	// 	Alert.alert("Select Option", "Choose an image source", [
+	// 		{
+	// 			text: "Camera",
+	// 			onPress: async () => {
+	// 				const permission = await ImagePicker.requestCameraPermissionsAsync()
+	// 				if (permission.granted) {
+	// 					const result = await ImagePicker.launchCameraAsync({
+	// 						mediaTypes: ImagePicker.MediaTypeOptions.Images,
+	// 						quality: 1,
+	// 					})
+	// 					if (!result.canceled) setImage(result.assets[0].uri)
+	// 				}
+	// 			},
+	// 		},
+	// 		{
+	// 			text: "Gallery",
+	// 			onPress: async () => {
+	// 				const permission =
+	// 					await ImagePicker.requestMediaLibraryPermissionsAsync()
+	// 				if (permission.granted) {
+	// 					const result = await ImagePicker.launchImageLibraryAsync({
+	// 						mediaTypes: ImagePicker.MediaTypeOptions.Images,
+	// 						quality: 1,
+	// 					})
+	// 					if (!result.canceled) setImage(result.assets[0].uri)
+	// 				}
+	// 			},
+	// 		},
+	// 		{ text: "Cancel", style: "cancel" },
+	// 	])
+	// }
 
 	// const handleSignup = async () => {
 	// 	const validationErrors = validateSignUp({
@@ -157,6 +157,11 @@ export default function SignUpScreen() {
 	// 	}
 	// }
 	const handleSignup = async () => {
+		let profilePictureUrl = null
+		if (image) {
+			const fileName = email.replace(/[@.]/g, "_") + ".jpg"
+			profilePictureUrl = await uploadImageToAzure(image, fileName)
+		}
 		const userData = {
 			name,
 			email,
@@ -166,6 +171,7 @@ export default function SignUpScreen() {
 			gender,
 			role,
 			birthDate,
+			profilePictureUrl,
 		}
 
 		try {
@@ -192,6 +198,49 @@ export default function SignUpScreen() {
 		} catch (error) {
 			console.error("⚠️ Signup error:", error)
 			Alert.alert("Error", "Failed to connect to the server.")
+		}
+	}
+
+	const uploadImageToAzure = async (uri: string, fileName: string) => {
+		try {
+			const accountName = "becomebetterstorage"
+			const containerName = "profile-pictures"
+			const sasToken =
+				"sv=2024-11-04&ss=bfqt&srt=o&sp=rwdlacupiytfx&se=2025-05-27T12:21:40Z&st=2025-05-27T04:21:40Z&spr=https&sig=DDuRX86pR%2FSeBnxi9aP849xtIluglaGWuhAjhJSaxPE%3D" // no '?'
+			const blobUrl = `https://${accountName}.blob.core.windows.net/${containerName}/${fileName}?${sasToken}`
+
+			const response = await FileSystem.uploadAsync(blobUrl, uri, {
+				httpMethod: "PUT",
+				uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+				headers: {
+					"x-ms-blob-type": "BlockBlob",
+					"Content-Type": "image/jpeg",
+				},
+			})
+
+			console.log("✅ Image uploaded:", blobUrl.split("?")[0])
+			return blobUrl.split("?")[0]
+		} catch (error) {
+			console.error("❌ Upload error:", (error as Error).message)
+			return null
+		}
+	}
+
+	const handlePickImage = async () => {
+		const result = await ImagePicker.launchImageLibraryAsync({
+			mediaTypes: ImagePicker.MediaTypeOptions.Images,
+			allowsEditing: true,
+			quality: 1,
+		})
+
+		if (!result.canceled) {
+			// convert to JPEG
+			const manipulated = await ImageManipulator.manipulateAsync(
+				result.assets[0].uri,
+				[],
+				{ compress: 1, format: ImageManipulator.SaveFormat.JPEG }
+			)
+			setImage(manipulated.uri)
 		}
 	}
 
