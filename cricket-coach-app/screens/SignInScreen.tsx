@@ -1,7 +1,7 @@
 import { AntDesign } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import React, { useState } from "react"
-import { Text, TextInput, TouchableOpacity, View } from "react-native"
+import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native"
 import { validateSignIn } from "../js/siginValidation"
 import { styles } from "../styles/SignInStyles"
 
@@ -12,17 +12,43 @@ export default function SignInScreen() {
 	const [password, setPassword] = useState("")
 	const [error, setError] = useState("")
 
-	const handleLogin = () => {
+	const handleLogin = async () => {
 		const validationError = validateSignIn(email.trim(), password.trim())
 
 		if (validationError) {
 			setError(validationError)
-		} else {
-			setError("") // <-- Clear the error here
-			console.log("Logging in...")
-			router.replace("/coachhome")
+			return
+		}
 
-			// Add navigation or API logic if needed
+		setError("")
+		console.log("📤 Sending login request...")
+
+		try {
+			const response = await fetch(
+				"https://becomebetter-api.azurewebsites.net/api/SignIn?code=RHv5PZfoUpc9OjQgnS_eHQBdnCtKgUeqV4KzsCu2zednAzFu6mjybw==",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ email, password }),
+				}
+			)
+
+			const result = await response.json() // ✅ Only read once
+
+			console.log("📥 Login Response:", result)
+
+			if (response.ok) {
+				const userName = result.user?.name || "User"
+				Alert.alert("✅ Login Success", `Welcome, ${userName}!`)
+				router.replace("/coachhome")
+			} else {
+				Alert.alert("❌ Login Failed", result.message || "Invalid credentials")
+			}
+		} catch (err) {
+			console.error("⚠️ Login Error:", err)
+			Alert.alert("Error", "Login request failed.")
 		}
 	}
 
