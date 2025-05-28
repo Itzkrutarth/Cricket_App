@@ -1,11 +1,25 @@
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNavigation } from "@react-navigation/native"
 import { router } from "expo-router"
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { Image, Text, TouchableOpacity, View } from "react-native"
 import { styles } from "../styles/CoachHomeStyles" // Update if your styles path differs
 
 const HomeContent = () => {
 	const navigation = useNavigation()
+
+	const [coachName, setCoachName] = useState("")
+	const [profileUrl, setProfileUrl] = useState("")
+
+	useEffect(() => {
+		const loadCoachData = async () => {
+			const name = await AsyncStorage.getItem("userName")
+			const photo = await AsyncStorage.getItem("profilePictureUrl")
+			if (name) setCoachName(name)
+			if (photo) setProfileUrl(photo)
+		}
+		loadCoachData()
+	}, [])
 
 	function handleStudent(): void {
 		router.push("/coach-home/StudentScreen")
@@ -20,11 +34,15 @@ const HomeContent = () => {
         </TouchableOpacity> */}
 				<View style={styles.profile}>
 					<Image
-						source={require("../assets/images/boy.png")}
+						source={
+							profileUrl
+								? { uri: profileUrl }
+								: require("../assets/images/boy.png")
+						}
 						style={styles.profileImage}
 					/>
 				</View>
-				<Text>Hello Coach</Text>
+				<Text>Hello, {coachName || "Coach"}</Text>
 			</View>
 
 			{/* Stats */}
