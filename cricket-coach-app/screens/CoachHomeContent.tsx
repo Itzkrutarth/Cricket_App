@@ -41,8 +41,12 @@ const HomeContent = () => {
 						}
 						style={styles.profileImage}
 					/>
+					<View style={styles.greetingContainer}>
+						<Text style={styles.greetingText}>
+							Hello, {coachName || "Coach"}
+						</Text>
+					</View>
 				</View>
-				<Text>Hello, {coachName || "Coach"}</Text>
 			</View>
 
 			{/* Stats */}
