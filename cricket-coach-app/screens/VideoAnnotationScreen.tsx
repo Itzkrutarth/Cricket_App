@@ -20,6 +20,7 @@ import { useRouter, useLocalSearchParams } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import Svg, { Path, Text as SvgText, Circle } from "react-native-svg"
 import { styles } from "@/styles/VideoAnnotationEditor"
+import Header from "./Header_1"
 // Type definitions
 interface DrawingAnnotation {
 	id: number
@@ -436,7 +437,7 @@ const VideoAnnotationScreen = () => {
 			<StatusBar barStyle="light-content" backgroundColor="#000" />
 
 			{/* Header */}
-			<View style={styles.header}>
+			{/* <View style={styles.header}>
 				<TouchableOpacity
 					style={styles.headerButton}
 					onPress={exitAnnotationMode}
@@ -469,7 +470,20 @@ const VideoAnnotationScreen = () => {
 						/>
 					</TouchableOpacity>
 				</View>
-			</View>
+			</View> */}
+
+			<Header
+				title={`Annotate: ${title?.toString() || "Video"}`}
+				playPauseButton={
+					<TouchableOpacity onPress={toggleVideoPlayback}>
+						<Ionicons
+							name={isVideoPlaying ? "pause" : "play"}
+							size={26}
+							color="#1D4ED8"
+						/>
+					</TouchableOpacity>
+				}
+			/>
 
 			{/* Video Player with Annotation Overlay */}
 			<View style={styles.videoContainer}>
