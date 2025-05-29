@@ -5,6 +5,7 @@ import React, { useState } from "react"
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native"
 import { validateSignIn } from "../js/siginValidation"
 import { styles } from "../styles/SignInStyles"
+import { ActivityIndicator } from "react-native"
 
 export default function SignInScreen() {
 	const router = useRouter()
@@ -12,6 +13,7 @@ export default function SignInScreen() {
 	const [email, setEmail] = useState("")
 	const [password, setPassword] = useState("")
 	const [error, setError] = useState("")
+	const [loading, setLoading] = useState(false)
 
 	const handleLogin = async () => {
 		const validationError = validateSignIn(email.trim(), password.trim())
@@ -22,9 +24,11 @@ export default function SignInScreen() {
 		}
 
 		setError("")
-		console.log("📤 Sending login request...")
+		setLoading(true) // ✅ Only after passing validation
 
 		try {
+			console.log("📤 Sending login request...")
+
 			const response = await fetch(
 				"https://becomebetter-api.azurewebsites.net/api/SignIn?code=RHv5PZfoUpc9OjQgnS_eHQBdnCtKgUeqV4KzsCu2zednAzFu6mjybw==",
 				{
@@ -38,15 +42,12 @@ export default function SignInScreen() {
 
 			const result = await response.json()
 
-			console.log("📥 Login Response:", result)
-
 			if (response.ok) {
 				const user = result.user
 				const userName = user?.name || "User"
 				const userRole = user?.role
 				const profileUrl = user?.profilePictureUrl || ""
 
-				// Save to AsyncStorage
 				if (userName) await AsyncStorage.setItem("userName", userName)
 				if (userRole) await AsyncStorage.setItem("userRole", userRole)
 				if (profileUrl)
@@ -68,6 +69,8 @@ export default function SignInScreen() {
 		} catch (err) {
 			console.error("⚠️ Login Error:", err)
 			Alert.alert("Error", "Login request failed.")
+		} finally {
+			setLoading(false)
 		}
 	}
 
@@ -93,9 +96,13 @@ export default function SignInScreen() {
 					onChangeText={setPassword}
 				/>
 
-				<TouchableOpacity style={styles.button} onPress={handleLogin}>
-					<Text style={styles.buttonText}>Login</Text>
-				</TouchableOpacity>
+				{loading ? (
+					<ActivityIndicator size="large" color="#1D4ED8" />
+				) : (
+					<TouchableOpacity onPress={handleLogin} style={styles.button}>
+						<Text style={styles.buttonText}>Login</Text>
+					</TouchableOpacity>
+				)}
 
 				<View style={styles.rightAlignRow}>
 					{/* <Text style={styles.rememberText}>Save Password</Text> */}
