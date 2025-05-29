@@ -1,2 +1,2 @@
-import AnnotationScreen from "@/screens/VideoAnnotationScreen";
-export default AnnotationScreen
+import VideoAnnotationScreen from "@/screens/VideoAnnotationScreen";
+export default VideoAnnotationScreen

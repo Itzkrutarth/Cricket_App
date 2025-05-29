@@ -24,7 +24,7 @@ const VideoPlayerScreen = () => {
     if (typeof videoSource === 'string' && videoSource.startsWith('http')) {
       return { uri: videoSource };
     }
-    return require('../assets/videos/video.mp4');
+    return require('../assets/videos/jay.mp4');
   };
 
   return (
@@ -55,7 +55,6 @@ const VideoPlayerScreen = () => {
           useNativeControls
           resizeMode={ResizeMode.CONTAIN}
           shouldPlay
-          isLooping
           onPlaybackStatusUpdate={status => setStatus(() => status)}
         />
       </View>

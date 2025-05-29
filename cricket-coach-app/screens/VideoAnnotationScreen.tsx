@@ -1,663 +1,1031 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from "react"
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  Dimensions,
-  StatusBar,
-  StyleSheet,
-  Modal,
-  TextInput,
-  Alert,
-  PanResponder,
-  SafeAreaView,
-} from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import Svg, { Path, Text as SvgText } from 'react-native-svg';
-
+	View,
+	Text,
+	TouchableOpacity,
+	Dimensions,
+	StatusBar,
+	StyleSheet,
+	Modal,
+	TextInput,
+	Alert,
+	PanResponder,
+	SafeAreaView,
+	ScrollView,
+	Image,
+} from "react-native"
+import { Video, ResizeMode } from "expo-av"
+import Slider from "@react-native-community/slider"
+import { useRouter, useLocalSearchParams } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
+import Svg, { Path, Text as SvgText, Circle } from "react-native-svg"
+import { styles } from "@/styles/VideoAnnotationEditor"
 // Type definitions
 interface DrawingAnnotation {
-  id: number;
-  type: 'pen' | 'marker';
-  path: string;
-  color: string;
-  strokeWidth: number;
-  opacity: number;
+	id: number
+	type: "pen" | "marker"
+	path: string
+	color: string
+	strokeWidth: number
+	opacity: number
+	frameTimestamp: number // Associate annotation with specific frame
 }
 
 interface TextAnnotation {
-  id: number;
-  type: 'text';
-  text: string;
-  x: number;
-  y: number;
-  color: string;
-  fontSize: number;
+	id: number
+	type: "text"
+	text: string
+	x: number
+	y: number
+	color: string
+	fontSize: number
+	frameTimestamp: number // Associate annotation with specific frame
 }
 
-type Annotation = DrawingAnnotation | TextAnnotation;
-type ToolType = 'pen' | 'marker' | 'text' | null;
+type Annotation = DrawingAnnotation | TextAnnotation
+type ToolType = "pen" | "marker" | "text" | null
 
-const { width, height } = Dimensions.get('window');
+interface VideoFrame {
+	id: number
+	timestamp: number
+	thumbnail: string
+	isActive: boolean
+	annotationCount: number // Track annotations per frame
+}
+
+const { width, height } = Dimensions.get("window")
+
+// Color palette for annotations
+const ANNOTATION_COLORS = [
+	"#FF3030", // Red
+	"#FFD700", // Gold
+	"#00FF00", // Green
+	"#00BFFF", // Deep Sky Blue
+	"#FF69B4", // Hot Pink
+	"#FF8C00", // Dark Orange
+	"#9370DB", // Medium Purple
+	"#FFFFFF", // White
+	"#000000", // Black
+]
 
 const VideoAnnotationScreen = () => {
-  const router = useRouter();
-  const params = useLocalSearchParams();
-  
-  // State management
-  const [selectedTool, setSelectedTool] = useState<ToolType>(null);
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
-  const [currentPath, setCurrentPath] = useState('');
-  const [showTextModal, setShowTextModal] = useState(false);
-  const [textAnnotation, setTextAnnotation] = useState('');
-  const [textPosition, setTextPosition] = useState({ x: 0, y: 0 });
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [videoStatus, setVideoStatus] = useState({});
-  
-  const pathRef = useRef('');
-  const videoRef = useRef<Video>(null);
+	const router = useRouter()
+	const params = useLocalSearchParams()
 
-  const { title, videoSource } = params;
+	// State management
+	const [selectedTool, setSelectedTool] = useState<ToolType>(null)
+	const [selectedColor, setSelectedColor] = useState("#FF3030")
+	const [annotations, setAnnotations] = useState<Annotation[]>([])
+	const [currentPath, setCurrentPath] = useState("")
+	const [showTextModal, setShowTextModal] = useState(false)
+	const [showColorPicker, setShowColorPicker] = useState(false)
+	const [textAnnotation, setTextAnnotation] = useState("")
+	const [textPosition, setTextPosition] = useState({ x: 0, y: 0 })
+	const [hasChanges, setHasChanges] = useState(false)
+	const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+	const [videoStatus, setVideoStatus] = useState({})
+	const [currentTime, setCurrentTime] = useState(0)
+	const [videoDuration, setVideoDuration] = useState(0)
 
-  const getVideoSource = () => {
-    if (typeof videoSource === 'string' && videoSource.startsWith('http')) {
-      return { uri: videoSource };
-    }
-    return require('../assets/videos/video.mp4');
-  };
+	const [selectedFrameIndex, setSelectedFrameIndex] = useState(0)
+	const [isFrameScrolling, setIsFrameScrolling] = useState(false)
 
-  // Drawing functionality
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => selectedTool === 'pen' || selectedTool === 'marker',
-    onMoveShouldSetPanResponder: () => selectedTool === 'pen' || selectedTool === 'marker',
-    
-    onPanResponderGrant: (evt) => {
-      const { locationX, locationY } = evt.nativeEvent;
-      pathRef.current = `M${locationX},${locationY}`;
-      setCurrentPath(pathRef.current);
-    },
-    
-    onPanResponderMove: (evt) => {
-      const { locationX, locationY } = evt.nativeEvent;
-      pathRef.current += ` L${locationX},${locationY}`;
-      setCurrentPath(pathRef.current);
-    },
-    
-    onPanResponderRelease: () => {
-      if (pathRef.current && (selectedTool === 'pen' || selectedTool === 'marker')) {
-        const newAnnotation: DrawingAnnotation = {
-          id: Date.now(),
-          type: selectedTool,
-          path: pathRef.current,
-          color: selectedTool === 'pen' ? '#FF3030' : '#FFD700',
-          strokeWidth: selectedTool === 'pen' ? 3 : 8,
-          opacity: selectedTool === 'pen' ? 1 : 0.7,
-        };
-        setAnnotations(prev => [...prev, newAnnotation]);
-        setCurrentPath('');
-        pathRef.current = '';
-        setHasChanges(true);
-      }
-    },
-  });
+	// Video frames state - Generate frames for smooth scrubbing
+	const [videoFrames, setVideoFrames] = useState<VideoFrame[]>(() => {
+		const frames = []
+		for (let i = 0; i < 6; i++) {
+			// 60 frames for 1-second intervals
+			frames.push({
+				id: i + 1,
+				timestamp: i * 1000, // Every second
+				thumbnail: "",
+				isActive: i === 0,
+				annotationCount: 0,
+			})
+		}
+		return frames
+	})
 
-  // Text annotation handling
-  const handleTextAnnotation = (evt: any) => {
-    if (selectedTool === 'text') {
-      const { locationX, locationY } = evt.nativeEvent;
-      setTextPosition({ x: locationX, y: locationY });
-      setShowTextModal(true);
-    }
-  };
+	const pathRef = useRef("")
+	const videoRef = useRef<Video>(null)
+	const frameScrollRef = useRef<ScrollView>(null)
 
-  const addTextAnnotation = () => {
-    if (textAnnotation.trim()) {
-      const newAnnotation: TextAnnotation = {
-        id: Date.now(),
-        type: 'text',
-        text: textAnnotation,
-        x: textPosition.x,
-        y: textPosition.y,
-        color: '#FFFFFF',
-        fontSize: 18,
-      };
-      setAnnotations(prev => [...prev, newAnnotation]);
-      setTextAnnotation('');
-      setShowTextModal(false);
-      setHasChanges(true);
-    }
-  };
+	const { title, videoSource } = params
 
-  // Tool management
-  const selectTool = (tool: ToolType) => {
-    setSelectedTool(selectedTool === tool ? null : tool);
-  };
+	const getVideoSource = () => {
+		if (typeof videoSource === "string" && videoSource.startsWith("http")) {
+			return { uri: videoSource }
+		}
+		return require("../assets/videos/jay.mp4")
+	}
 
-  const clearAllAnnotations = () => {
-    Alert.alert(
-      'Clear Annotations',
-      'Are you sure you want to clear all annotations?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
-          style: 'destructive',
-          onPress: () => {
-            setAnnotations([]);
-            setHasChanges(false);
-            setSelectedTool(null);
-          }
-        }
-      ]
-    );
-  };
+	// Get current frame timestamp
+	const getCurrentFrameTimestamp = () => {
+		return videoFrames[selectedFrameIndex]?.timestamp || 0
+	}
 
-  const undoLastAnnotation = () => {
-    if (annotations.length > 0) {
-      setAnnotations(prev => prev.slice(0, -1));
-      setHasChanges(annotations.length > 1);
-    }
-  };
+	// Get annotations for current frame
+	const getCurrentFrameAnnotations = () => {
+		const currentFrameTimestamp = getCurrentFrameTimestamp()
+		return annotations.filter(
+			(annotation) =>
+				Math.abs(annotation.frameTimestamp - currentFrameTimestamp) < 500 // 0.5 second tolerance
+		)
+	}
 
-  // Save functionality
-  const saveAnnotations = () => {
-    Alert.alert(
-      'Save Annotations',
-      `Save ${annotations.length} annotations?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Save', 
-          onPress: () => {
-            // Implement your save logic here
-            console.log('Saving annotations:', annotations);
-            setHasChanges(false);
-            Alert.alert('Success', 'Annotations saved successfully!');
-          }
-        }
-      ]
-    );
-  };
+	// Update annotation count for frames
+	const updateFrameAnnotationCounts = useCallback(() => {
+		setVideoFrames((prevFrames) =>
+			prevFrames.map((frame) => ({
+				...frame,
+				annotationCount: annotations.filter(
+					(annotation) =>
+						Math.abs(annotation.frameTimestamp - frame.timestamp) < 500
+				).length,
+			}))
+		)
+	}, [annotations])
 
-  // Video controls
-  const toggleVideoPlayback = async () => {
-    if (videoRef.current) {
-      if (isVideoPlaying) {
-        await videoRef.current.pauseAsync();
-      } else {
-        await videoRef.current.playAsync();
-      }
-      setIsVideoPlaying(!isVideoPlaying);
-    }
-  };
+	useEffect(() => {
+		updateFrameAnnotationCounts()
+	}, [annotations, updateFrameAnnotationCounts])
 
-  const exitAnnotationMode = () => {
-    if (hasChanges) {
-      Alert.alert(
-        'Unsaved Changes',
-        'You have unsaved annotations. What would you like to do?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Discard', style: 'destructive', onPress: () => router.back() },
-          { text: 'Save & Exit', onPress: () => { saveAnnotations(); router.back(); } }
-        ]
-      );
-    } else {
-      router.back();
-    }
-  };
+	// Frame selection handler
+	const selectFrame = async (frameIndex: number) => {
+		if (frameIndex === selectedFrameIndex) return
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerButton} onPress={exitAnnotationMode}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          Annotate: {title}
-        </Text>
-        
-        <View style={styles.headerActions}>
-          {hasChanges && (
-            <TouchableOpacity style={styles.saveHeaderButton} onPress={saveAnnotations}>
-              <Ionicons name="save" size={20} color="white" />
-            </TouchableOpacity>
-          )}
-          
-          <TouchableOpacity style={styles.headerButton} onPress={toggleVideoPlayback}>
-            <Ionicons 
-              name={isVideoPlaying ? "pause" : "play"} 
-              size={20} 
-              color="white" 
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
+		setSelectedFrameIndex(frameIndex)
+		const selectedFrame = videoFrames[frameIndex]
 
-      {/* Video Player with Annotation Overlay */}
-      <View style={styles.videoContainer}>
-        <Video
-          ref={videoRef}
-          source={getVideoSource()}
-          style={styles.video}
-          resizeMode={ResizeMode.CONTAIN}
-          shouldPlay={false}
-          isLooping={true}
-          onPlaybackStatusUpdate={(status) => {
-            setVideoStatus(status);
-            if (status.isLoaded) {
-              setIsVideoPlaying(status.isPlaying || false);
-            }
-          }}
-        />
-        
-        {/* Saved Annotations Layer */}
-        <View style={styles.savedAnnotationsOverlay} pointerEvents="none">
-          <Svg style={StyleSheet.absoluteFillObject}>
-            {annotations.map((annotation) => {
-              if (annotation.type === 'text') {
-                return (
-                  <SvgText
-                    key={annotation.id}
-                    x={annotation.x}
-                    y={annotation.y}
-                    fill={annotation.color}
-                    fontSize={annotation.fontSize}
-                    fontWeight="bold"
-                    stroke="#000"
-                    strokeWidth={1}
-                  >
-                    {annotation.text}
-                  </SvgText>
-                );
-              } else {
-                return (
-                  <Path
-                    key={annotation.id}
-                    d={annotation.path}
-                    stroke={annotation.color}
-                    strokeWidth={annotation.strokeWidth}
-                    strokeOpacity={annotation.opacity}
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                );
-              }
-            })}
-          </Svg>
-        </View>
+		// Update video position
+		if (videoRef.current && selectedFrame) {
+			setIsFrameScrolling(true)
+			await videoRef.current.setPositionAsync(selectedFrame.timestamp)
+			setCurrentTime(selectedFrame.timestamp)
 
-        {/* Active Drawing Layer */}
-        {selectedTool && (
-          <View
-            style={styles.drawingOverlay}
-            {...panResponder.panHandlers}
-            onTouchEnd={handleTextAnnotation}
-          >
-            <Svg style={StyleSheet.absoluteFillObject}>
-              {currentPath && (
-                <Path
-                  d={currentPath}
-                  stroke={selectedTool === 'pen' ? '#FF3030' : '#FFD700'}
-                  strokeWidth={selectedTool === 'pen' ? 3 : 8}
-                  strokeOpacity={selectedTool === 'pen' ? 1 : 0.7}
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              )}
-            </Svg>
-          </View>
-        )}
-      </View>
+			// Update active frame
+			setVideoFrames((prev) =>
+				prev.map((frame, index) => ({
+					...frame,
+					isActive: index === frameIndex,
+				}))
+			)
 
-      {/* Tool Palette */}
-      <View style={styles.toolPalette}>
-        <View style={styles.toolsRow}>
-          {/* Drawing Tools */}
-          <TouchableOpacity
-            style={[styles.toolButton, selectedTool === 'pen' && styles.selectedTool]}
-            onPress={() => selectTool('pen')}
-          >
-            <Ionicons name="pencil" size={24} color={selectedTool === 'pen' ? '#000' : '#fff'} />
-            <Text style={[styles.toolLabel, selectedTool === 'pen' && styles.selectedToolLabel]}>
-              Pen
-            </Text>
-          </TouchableOpacity>
+			setTimeout(() => setIsFrameScrolling(false), 100)
+		}
+	}
 
-          <TouchableOpacity
-            style={[styles.toolButton, selectedTool === 'marker' && styles.selectedTool]}
-            onPress={() => selectTool('marker')}
-          >
-            <Ionicons name="brush" size={24} color={selectedTool === 'marker' ? '#000' : '#fff'} />
-            <Text style={[styles.toolLabel, selectedTool === 'marker' && styles.selectedToolLabel]}>
-              Marker
-            </Text>
-          </TouchableOpacity>
+	// Auto-scroll to active frame
+	const scrollToActiveFrame = (frameIndex: number) => {
+		if (frameScrollRef.current) {
+			const frameWidth = 76 // Width + margin
+			const scrollPosition =
+				frameIndex * frameWidth - width / 2 + frameWidth / 2
+			frameScrollRef.current.scrollTo({
+				x: Math.max(0, scrollPosition),
+				animated: true,
+			})
+		}
+	}
 
-          <TouchableOpacity
-            style={[styles.toolButton, selectedTool === 'text' && styles.selectedTool]}
-            onPress={() => selectTool('text')}
-          >
-            <Ionicons name="text" size={24} color={selectedTool === 'text' ? '#000' : '#fff'} />
-            <Text style={[styles.toolLabel, selectedTool === 'text' && styles.selectedToolLabel]}>
-              Text
-            </Text>
-          </TouchableOpacity>
-        </View>
+	// Drawing functionality
+	const panResponder = PanResponder.create({
+		onStartShouldSetPanResponder: () =>
+			selectedTool === "pen" || selectedTool === "marker",
+		onMoveShouldSetPanResponder: () =>
+			selectedTool === "pen" || selectedTool === "marker",
 
-        <View style={styles.toolsRow}>
-          {/* Action Tools */}
-          <TouchableOpacity
-            style={[styles.toolButton, styles.actionButton]}
-            onPress={undoLastAnnotation}
-            disabled={annotations.length === 0}
-          >
-            <Ionicons 
-              name="arrow-undo" 
-              size={24} 
-              color={annotations.length === 0 ? '#666' : '#fff'} 
-            />
-            <Text style={[styles.toolLabel, annotations.length === 0 && styles.disabledLabel]}>
-              Undo
-            </Text>
-          </TouchableOpacity>
+		onPanResponderGrant: (evt) => {
+			const { locationX, locationY } = evt.nativeEvent
+			pathRef.current = `M${locationX},${locationY}`
+			setCurrentPath(pathRef.current)
+		},
 
-          <TouchableOpacity
-            style={[styles.toolButton, styles.actionButton]}
-            onPress={clearAllAnnotations}
-            disabled={annotations.length === 0}
-          >
-            <Ionicons 
-              name="trash" 
-              size={24} 
-              color={annotations.length === 0 ? '#666' : '#FF6B6B'} 
-            />
-            <Text style={[styles.toolLabel, { color: annotations.length === 0 ? '#666' : '#FF6B6B' }]}>
-              Clear
-            </Text>
-          </TouchableOpacity>
+		onPanResponderMove: (evt) => {
+			const { locationX, locationY } = evt.nativeEvent
+			pathRef.current += ` L${locationX},${locationY}`
+			setCurrentPath(pathRef.current)
+		},
 
-          <TouchableOpacity
-            style={[styles.toolButton, styles.actionButton]}
-            onPress={saveAnnotations}
-            disabled={!hasChanges}
-          >
-            <Ionicons 
-              name="save" 
-              size={24} 
-              color={!hasChanges ? '#666' : '#4CAF50'} 
-            />
-            <Text style={[styles.toolLabel, { color: !hasChanges ? '#666' : '#4CAF50' }]}>
-              Save
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+		onPanResponderRelease: () => {
+			if (
+				pathRef.current &&
+				(selectedTool === "pen" || selectedTool === "marker")
+			) {
+				const newAnnotation: DrawingAnnotation = {
+					id: Date.now(),
+					type: selectedTool,
+					path: pathRef.current,
+					color: selectedColor,
+					strokeWidth: selectedTool === "pen" ? 3 : 8,
+					opacity: selectedTool === "pen" ? 1 : 0.7,
+					frameTimestamp: getCurrentFrameTimestamp(),
+				}
+				setAnnotations((prev) => [...prev, newAnnotation])
+				setCurrentPath("")
+				pathRef.current = ""
+				setHasChanges(true)
+			}
+		},
+	})
 
-      {/* Status Bar */}
-      <View style={styles.statusBar}>
-        <Text style={styles.statusText}>
-          {annotations.length} annotation{annotations.length !== 1 ? 's' : ''}
-        </Text>
-        {selectedTool && (
-          <Text style={styles.statusText}>
-            {selectedTool.toUpperCase()} selected • Tap to draw or add text
-          </Text>
-        )}
-        {hasChanges && (
-          <View style={styles.unsavedIndicator}>
-            <Ionicons name="ellipse" size={8} color="#FF6B6B" />
-            <Text style={styles.unsavedText}>Unsaved</Text>
-          </View>
-        )}
-      </View>
+	// Text annotation handling
+	const handleTextAnnotation = (evt: any) => {
+		if (selectedTool === "text") {
+			const { locationX, locationY } = evt.nativeEvent
+			setTextPosition({ x: locationX, y: locationY })
+			setShowTextModal(true)
+		}
+	}
 
-      {/* Text Input Modal */}
-      <Modal
-        visible={showTextModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowTextModal(false)}
-      >
-        <View style={styles.textModalOverlay}>
-          <View style={styles.textModalContainer}>
-            <Text style={styles.textModalTitle}>Add Text Annotation</Text>
-            <TextInput
-              style={styles.textInput}
-              value={textAnnotation}
-              onChangeText={setTextAnnotation}
-              placeholder="Enter your annotation..."
-              placeholderTextColor="#999"
-              multiline={true}
-              maxLength={100}
-              autoFocus={true}
-            />
-            <Text style={styles.characterCount}>
-              {textAnnotation.length}/100
-            </Text>
-            <View style={styles.textModalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setShowTextModal(false);
-                  setTextAnnotation('');
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.addButton]}
-                onPress={addTextAnnotation}
-                disabled={!textAnnotation.trim()}
-              >
-                <Text style={[
-                  styles.addButtonText, 
-                  !textAnnotation.trim() && styles.disabledButtonText
-                ]}>
-                  Add Text
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
-  );
-};
+	const addTextAnnotation = () => {
+		if (textAnnotation.trim()) {
+			const newAnnotation: TextAnnotation = {
+				id: Date.now(),
+				type: "text",
+				text: textAnnotation,
+				x: textPosition.x,
+				y: textPosition.y,
+				color: selectedColor,
+				fontSize: 18,
+				frameTimestamp: getCurrentFrameTimestamp(),
+			}
+			setAnnotations((prev) => [...prev, newAnnotation])
+			setTextAnnotation("")
+			setShowTextModal(false)
+			setHasChanges(true)
+		}
+	}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    backgroundColor: '#1a1a1a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  headerButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    flex: 1,
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginHorizontal: 12,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  saveHeaderButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-  },
-  videoContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  video: {
-    width: width,
-    height: '100%',
-  },
-  savedAnnotationsOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  drawingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  toolPalette: {
-    backgroundColor: '#1a1a1a',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#333',
-  },
-  toolsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 8,
-  },
-  toolButton: {
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    minWidth: 70,
-    backgroundColor: 'transparent',
-  },
-  selectedTool: {
-    backgroundColor: '#FFD700',
-  },
-  actionButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  toolLabel: {
-    color: 'white',
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '500',
-  },
-  selectedToolLabel: {
-    color: '#000',
-  },
-  disabledLabel: {
-    color: '#666',
-  },
-  statusBar: {
-    backgroundColor: '#2a2a2a',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  statusText: {
-    color: '#ccc',
-    fontSize: 12,
-  },
-  unsavedIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  unsavedText: {
-    color: '#FF6B6B',
-    fontSize: 12,
-    marginLeft: 4,
-  },
-  textModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textModalContainer: {
-    backgroundColor: '#2a2a2a',
-    padding: 24,
-    borderRadius: 16,
-    width: width * 0.85,
-    maxWidth: 400,
-  },
-  textModalTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  textInput: {
-    backgroundColor: '#3a3a3a',
-    color: 'white',
-    padding: 16,
-    borderRadius: 12,
-    minHeight: 100,
-    textAlignVertical: 'top',
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#555',
-  },
-  characterCount: {
-    color: '#999',
-    fontSize: 12,
-    textAlign: 'right',
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  textModalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#666',
-  },
-  addButton: {
-    backgroundColor: '#4CAF50',
-  },
-  cancelButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  addButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  disabledButtonText: {
-    color: '#999',
-  },
-});
+	// Tool management
+	const selectTool = (tool: ToolType) => {
+		setSelectedTool(selectedTool === tool ? null : tool)
+	}
 
-export default VideoAnnotationScreen;
+	const selectColor = (color: string) => {
+		setSelectedColor(color)
+		setShowColorPicker(false)
+	}
+
+	const clearCurrentFrameAnnotations = () => {
+		const currentFrameTimestamp = getCurrentFrameTimestamp()
+		const currentFrameAnnotations = annotations.filter(
+			(annotation) =>
+				Math.abs(annotation.frameTimestamp - currentFrameTimestamp) < 500
+		)
+
+		if (currentFrameAnnotations.length === 0) {
+			Alert.alert("No Annotations", "No annotations found on current frame.")
+			return
+		}
+
+		Alert.alert(
+			"Clear Frame Annotations",
+			`Are you sure you want to clear ${currentFrameAnnotations.length} annotation(s) from this frame?`,
+			[
+				{ text: "Cancel", style: "cancel" },
+				{
+					text: "Clear",
+					style: "destructive",
+					onPress: () => {
+						setAnnotations((prev) =>
+							prev.filter(
+								(annotation) =>
+									Math.abs(annotation.frameTimestamp - currentFrameTimestamp) >=
+									500
+							)
+						)
+						setHasChanges(true)
+						setSelectedTool(null)
+					},
+				},
+			]
+		)
+	}
+
+	const clearAllAnnotations = () => {
+		Alert.alert(
+			"Clear All Annotations",
+			"Are you sure you want to clear all annotations from all frames?",
+			[
+				{ text: "Cancel", style: "cancel" },
+				{
+					text: "Clear All",
+					style: "destructive",
+					onPress: () => {
+						setAnnotations([])
+						setHasChanges(false)
+						setSelectedTool(null)
+					},
+				},
+			]
+		)
+	}
+
+	const undoLastAnnotation = () => {
+		const currentFrameTimestamp = getCurrentFrameTimestamp()
+		const currentFrameAnnotations = annotations.filter(
+			(annotation) =>
+				Math.abs(annotation.frameTimestamp - currentFrameTimestamp) < 500
+		)
+
+		if (currentFrameAnnotations.length > 0) {
+			// Remove last annotation from current frame
+			const lastAnnotation =
+				currentFrameAnnotations[currentFrameAnnotations.length - 1]
+			setAnnotations((prev) =>
+				prev.filter((annotation) => annotation.id !== lastAnnotation.id)
+			)
+			setHasChanges(true)
+		} else if (annotations.length > 0) {
+			// Remove last annotation from any frame
+			setAnnotations((prev) => prev.slice(0, -1))
+			setHasChanges(annotations.length > 1)
+		}
+	}
+
+	// Save functionality
+	const saveAnnotations = () => {
+		Alert.alert(
+			"Save Annotations",
+			`Save ${annotations.length} annotations across ${
+				videoFrames.filter((f) => f.annotationCount > 0).length
+			} frames?`,
+			[
+				{ text: "Cancel", style: "cancel" },
+				{
+					text: "Save",
+					onPress: () => {
+						// Implement your save logic here
+						console.log("Saving annotations:", annotations)
+						setHasChanges(false)
+						Alert.alert("Success", "Annotations saved successfully!")
+					},
+				},
+			]
+		)
+	}
+
+	// Video controls
+	const toggleVideoPlayback = async () => {
+		if (videoRef.current) {
+			if (isVideoPlaying) {
+				await videoRef.current.pauseAsync()
+			} else {
+				await videoRef.current.playAsync()
+			}
+			setIsVideoPlaying(!isVideoPlaying)
+		}
+	}
+
+	// Navigate frames with arrow keys or gestures
+	const navigateFrame = (direction: "prev" | "next") => {
+		const newIndex =
+			direction === "prev"
+				? Math.max(0, selectedFrameIndex - 1)
+				: Math.min(videoFrames.length - 1, selectedFrameIndex + 1)
+
+		if (newIndex !== selectedFrameIndex) {
+			selectFrame(newIndex)
+			scrollToActiveFrame(newIndex)
+		}
+	}
+
+	// Generate frame thumbnail
+	const generateThumbnail = (timestamp: number) => {
+		const hue = ((timestamp / 1000) * 30) % 360
+		return `hsl(${hue}, 70%, 60%)`
+	}
+
+	// Format time
+	const formatTime = (milliseconds: number) => {
+		const seconds = Math.floor(milliseconds / 1000)
+		const minutes = Math.floor(seconds / 60)
+		const remainingSeconds = seconds % 60
+		return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
+	}
+
+	const exitAnnotationMode = () => {
+		if (hasChanges) {
+			Alert.alert(
+				"Unsaved Changes",
+				"You have unsaved annotations. What would you like to do?",
+				[
+					{ text: "Cancel", style: "cancel" },
+					{
+						text: "Discard",
+						style: "destructive",
+						onPress: () => router.back(),
+					},
+					{
+						text: "Save & Exit",
+						onPress: () => {
+							saveAnnotations()
+							router.back()
+						},
+					},
+				]
+			)
+		} else {
+			router.back()
+		}
+	}
+
+	return (
+		<SafeAreaView style={styles.container}>
+			<StatusBar barStyle="light-content" backgroundColor="#000" />
+
+			{/* Header */}
+			<View style={styles.header}>
+				<TouchableOpacity
+					style={styles.headerButton}
+					onPress={exitAnnotationMode}
+				>
+					<Ionicons name="arrow-back" size={24} color="white" />
+				</TouchableOpacity>
+
+				<Text style={styles.headerTitle} numberOfLines={1}>
+					Annotate: {title}
+				</Text>
+
+				<View style={styles.headerActions}>
+					{hasChanges && (
+						<TouchableOpacity
+							style={styles.saveHeaderButton}
+							onPress={saveAnnotations}
+						>
+							<Ionicons name="save" size={20} color="white" />
+						</TouchableOpacity>
+					)}
+
+					<TouchableOpacity
+						style={styles.headerButton}
+						onPress={toggleVideoPlayback}
+					>
+						<Ionicons
+							name={isVideoPlaying ? "pause" : "play"}
+							size={20}
+							color="white"
+						/>
+					</TouchableOpacity>
+				</View>
+			</View>
+
+			{/* Video Player with Annotation Overlay */}
+			<View style={styles.videoContainer}>
+				<Video
+					ref={videoRef}
+					source={getVideoSource()}
+					style={styles.video}
+					resizeMode={ResizeMode.CONTAIN}
+					shouldPlay={false}
+					isLooping={true}
+					onPlaybackStatusUpdate={(status) => {
+						setVideoStatus(status)
+						if (status.isLoaded) {
+							setIsVideoPlaying(status.isPlaying || false)
+							if (!isFrameScrolling) {
+								const currentTimestamp = status.positionMillis || 0
+								setCurrentTime(currentTimestamp)
+
+								const nearestFrameIndex = Math.round(currentTimestamp / 1000)
+								if (
+									nearestFrameIndex !== selectedFrameIndex &&
+									nearestFrameIndex < videoFrames.length
+								) {
+									setSelectedFrameIndex(nearestFrameIndex)
+									setVideoFrames((prev) =>
+										prev.map((frame, index) => ({
+											...frame,
+											isActive: index === nearestFrameIndex,
+										}))
+									)
+								}
+							}
+							setVideoDuration(status.durationMillis || 0)
+						}
+					}}
+				/>
+
+				{/* Saved Annotations Layer */}
+				<View style={styles.savedAnnotationsOverlay} pointerEvents="none">
+					<Svg style={StyleSheet.absoluteFillObject}>
+						{getCurrentFrameAnnotations().map((annotation) =>
+							annotation.type === "text" ? (
+								<SvgText
+									key={annotation.id}
+									x={annotation.x}
+									y={annotation.y}
+									fill={annotation.color}
+									fontSize={annotation.fontSize}
+									fontWeight="bold"
+									stroke={annotation.color === "#FFFFFF" ? "#000" : "none"}
+									strokeWidth={annotation.color === "#FFFFFF" ? 1 : 0}
+								>
+									{annotation.text}
+								</SvgText>
+							) : (
+								<Path
+									key={annotation.id}
+									d={annotation.path}
+									stroke={annotation.color}
+									strokeWidth={annotation.strokeWidth}
+									strokeOpacity={annotation.opacity}
+									fill="none"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							)
+						)}
+					</Svg>
+				</View>
+
+				{/* Active Drawing Layer */}
+				{selectedTool && (
+					<View
+						style={styles.drawingOverlay}
+						{...panResponder.panHandlers}
+						onTouchEnd={handleTextAnnotation}
+					>
+						<Svg style={StyleSheet.absoluteFillObject}>
+							{currentPath && (
+								<Path
+									d={currentPath}
+									stroke={selectedColor}
+									strokeWidth={selectedTool === "pen" ? 3 : 8}
+									strokeOpacity={selectedTool === "pen" ? 1 : 0.7}
+									fill="none"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							)}
+						</Svg>
+					</View>
+				)}
+
+				{/* Frame Navigation Controls */}
+				<View style={styles.frameNavigation}>
+					<TouchableOpacity
+						style={[
+							styles.navButton,
+							selectedFrameIndex === 0 && styles.disabledNavButton,
+						]}
+						onPress={() => navigateFrame("prev")}
+						disabled={selectedFrameIndex === 0}
+					>
+						<Ionicons
+							name="chevron-back"
+							size={24}
+							color={selectedFrameIndex === 0 ? "#666" : "#FFD700"}
+						/>
+					</TouchableOpacity>
+
+					<View style={styles.frameInfo}>
+						<Text style={styles.frameCounter}>
+							{selectedFrameIndex + 1} / {videoFrames.length}
+						</Text>
+						<Text style={styles.frameTime}>
+							{formatTime(getCurrentFrameTimestamp())}
+						</Text>
+					</View>
+
+					<TouchableOpacity
+						style={[
+							styles.navButton,
+							selectedFrameIndex === videoFrames.length - 1 &&
+								styles.disabledNavButton,
+						]}
+						onPress={() => navigateFrame("next")}
+						disabled={selectedFrameIndex === videoFrames.length - 1}
+					>
+						<Ionicons
+							name="chevron-forward"
+							size={24}
+							color={
+								selectedFrameIndex === videoFrames.length - 1
+									? "#666"
+									: "#FFD700"
+							}
+						/>
+					</TouchableOpacity>
+				</View>
+
+				{/* 🎯 NEW: Frame Scrubber Slider */}
+				<View style={{ paddingHorizontal: 16, marginTop: 8 }}>
+					<Slider
+						style={{ width: "100%", height: 40 }}
+						minimumValue={0}
+						maximumValue={videoDuration}
+						value={currentTime}
+						step={100} // Adjust for precision
+						minimumTrackTintColor="#FFD700"
+						maximumTrackTintColor="#555"
+						thumbTintColor="#FFD700"
+						onValueChange={async (value) => {
+							setCurrentTime(value)
+							if (videoRef.current) {
+								await videoRef.current.setPositionAsync(value)
+							}
+
+							const nearestFrame = Math.round(value / 1000)
+							if (
+								nearestFrame !== selectedFrameIndex &&
+								nearestFrame < videoFrames.length
+							) {
+								setSelectedFrameIndex(nearestFrame)
+								setVideoFrames((prev) =>
+									prev.map((frame, idx) => ({
+										...frame,
+										isActive: idx === nearestFrame,
+									}))
+								)
+							}
+						}}
+					/>
+				</View>
+			</View>
+
+			{/* Video Frames Strip - Enhanced for Selection */}
+			<View style={styles.framesContainer}>
+				<View style={styles.framesHeader}>
+					<Text style={styles.framesTitle}>
+						Frame {selectedFrameIndex + 1}:{" "}
+						{formatTime(getCurrentFrameTimestamp())}
+					</Text>
+					<View style={styles.framesInfo}>
+						<Text style={styles.annotationCount}>
+							{getCurrentFrameAnnotations().length} annotations
+						</Text>
+						<TouchableOpacity style={styles.framesToggle}>
+							<Ionicons name="film" size={16} color="#FFD700" />
+						</TouchableOpacity>
+					</View>
+				</View>
+
+				<ScrollView
+					ref={frameScrollRef}
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					contentContainerStyle={styles.framesScrollView}
+					decelerationRate="fast"
+					snapToInterval={76}
+					snapToAlignment="center"
+				>
+					{videoFrames.map((frame, index) => {
+						const isSelected = index === selectedFrameIndex
+						const hasAnnotations = frame.annotationCount > 0
+
+						return (
+							<TouchableOpacity
+								key={frame.id}
+								style={[styles.frameItem, isSelected && styles.selectedFrame]}
+								onPress={() => {
+									selectFrame(index)
+									scrollToActiveFrame(index)
+								}}
+								activeOpacity={0.7}
+							>
+								<View
+									style={[
+										styles.frameThumbnail,
+										isSelected && styles.selectedThumbnail,
+										hasAnnotations && styles.annotatedThumbnail,
+									]}
+								>
+									<View
+										style={[
+											styles.thumbnailPlaceholder,
+											{ backgroundColor: generateThumbnail(frame.timestamp) },
+										]}
+									>
+										<View style={styles.thumbnailOverlay}>
+											<Ionicons
+												name="videocam"
+												size={12}
+												color="rgba(255,255,255,0.8)"
+											/>
+										</View>
+
+										{/* Annotation indicator */}
+										{hasAnnotations && (
+											<View style={styles.annotationIndicator}>
+												<Text style={styles.annotationBadge}>
+													{frame.annotationCount}
+												</Text>
+											</View>
+										)}
+									</View>
+
+									{/* Selection indicator */}
+									{isSelected && (
+										<View style={styles.selectionIndicator}>
+											<Ionicons
+												name="checkmark-circle"
+												size={20}
+												color="#FFD700"
+											/>
+										</View>
+									)}
+								</View>
+
+								<Text
+									style={[
+										styles.frameTimeLabel,
+										isSelected && styles.selectedFrameTime,
+									]}
+								>
+									{formatTime(frame.timestamp)}
+								</Text>
+							</TouchableOpacity>
+						)
+					})}
+				</ScrollView>
+			</View>
+
+			{/* Tool Palette */}
+			<View style={styles.toolPalette}>
+				<View style={styles.toolsRow}>
+					{/* Drawing Tools */}
+					<TouchableOpacity
+						style={[
+							styles.toolButton,
+							selectedTool === "pen" && styles.selectedTool,
+						]}
+						onPress={() => selectTool("pen")}
+					>
+						<Ionicons
+							name="pencil"
+							size={24}
+							color={selectedTool === "pen" ? "#000" : "#fff"}
+						/>
+						<Text
+							style={[
+								styles.toolLabel,
+								selectedTool === "pen" && styles.selectedToolLabel,
+							]}
+						>
+							Pen
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[
+							styles.toolButton,
+							selectedTool === "marker" && styles.selectedTool,
+						]}
+						onPress={() => selectTool("marker")}
+					>
+						<Ionicons
+							name="brush"
+							size={24}
+							color={selectedTool === "marker" ? "#000" : "#fff"}
+						/>
+						<Text
+							style={[
+								styles.toolLabel,
+								selectedTool === "marker" && styles.selectedToolLabel,
+							]}
+						>
+							Marker
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[
+							styles.toolButton,
+							selectedTool === "text" && styles.selectedTool,
+						]}
+						onPress={() => selectTool("text")}
+					>
+						<Ionicons
+							name="text"
+							size={24}
+							color={selectedTool === "text" ? "#000" : "#fff"}
+						/>
+						<Text
+							style={[
+								styles.toolLabel,
+								selectedTool === "text" && styles.selectedToolLabel,
+							]}
+						>
+							Text
+						</Text>
+					</TouchableOpacity>
+
+					{/* Color Picker */}
+					<TouchableOpacity
+						style={[styles.toolButton, styles.colorButton]}
+						onPress={() => setShowColorPicker(true)}
+					>
+						<View
+							style={[styles.colorPreview, { backgroundColor: selectedColor }]}
+						/>
+						<Text style={styles.toolLabel}>Color</Text>
+					</TouchableOpacity>
+				</View>
+
+				<View style={styles.toolsRow}>
+					{/* Action Tools */}
+					<TouchableOpacity
+						style={[styles.toolButton, styles.actionButton]}
+						onPress={undoLastAnnotation}
+						disabled={
+							getCurrentFrameAnnotations().length === 0 &&
+							annotations.length === 0
+						}
+					>
+						<Ionicons
+							name="arrow-undo"
+							size={24}
+							color={
+								getCurrentFrameAnnotations().length === 0 &&
+								annotations.length === 0
+									? "#666"
+									: "#fff"
+							}
+						/>
+						<Text
+							style={[
+								styles.toolLabel,
+								getCurrentFrameAnnotations().length === 0 &&
+									annotations.length === 0 &&
+									styles.disabledLabel,
+							]}
+						>
+							Undo
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[styles.toolButton, styles.actionButton]}
+						onPress={clearCurrentFrameAnnotations}
+						disabled={getCurrentFrameAnnotations().length === 0}
+					>
+						<Ionicons
+							name="trash"
+							size={24}
+							color={
+								getCurrentFrameAnnotations().length === 0 ? "#666" : "#FF6B6B"
+							}
+						/>
+						<Text
+							style={[
+								styles.toolLabel,
+								{
+									color:
+										getCurrentFrameAnnotations().length === 0
+											? "#666"
+											: "#FF6B6B",
+								},
+							]}
+						>
+							Clear Frame
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[styles.toolButton, styles.actionButton]}
+						onPress={saveAnnotations}
+						disabled={!hasChanges}
+					>
+						<Ionicons
+							name="save"
+							size={24}
+							color={!hasChanges ? "#666" : "#4CAF50"}
+						/>
+						<Text
+							style={[
+								styles.toolLabel,
+								{ color: !hasChanges ? "#666" : "#4CAF50" },
+							]}
+						>
+							Save
+						</Text>
+					</TouchableOpacity>
+				</View>
+			</View>
+
+			{/* Status Bar */}
+			<View style={styles.statusBar}>
+				<Text style={styles.statusText}>
+					Frame {selectedFrameIndex + 1}: {getCurrentFrameAnnotations().length}{" "}
+					annotation{getCurrentFrameAnnotations().length !== 1 ? "s" : ""} •
+					Total: {annotations.length}
+				</Text>
+				{selectedTool && (
+					<Text style={styles.statusText}>
+						{selectedTool.toUpperCase()} selected • Tap to draw or add text
+					</Text>
+				)}
+				{hasChanges && (
+					<View style={styles.unsavedIndicator}>
+						<Ionicons name="ellipse" size={8} color="#FF6B6B" />
+						<Text style={styles.unsavedText}>Unsaved</Text>
+					</View>
+				)}
+			</View>
+
+			{/* Color Picker Modal */}
+			<Modal
+				visible={showColorPicker}
+				transparent={true}
+				animationType="fade"
+				onRequestClose={() => setShowColorPicker(false)}
+			>
+				<View style={styles.colorModalOverlay}>
+					<View style={styles.colorModalContainer}>
+						<Text style={styles.colorModalTitle}>Choose Color</Text>
+						<View style={styles.colorGrid}>
+							{ANNOTATION_COLORS.map((color) => (
+								<TouchableOpacity
+									key={color}
+									style={[
+										styles.colorOption,
+										{ backgroundColor: color },
+										selectedColor === color && styles.selectedColorOption,
+									]}
+									onPress={() => selectColor(color)}
+								>
+									{selectedColor === color && (
+										<Ionicons
+											name="checkmark"
+											size={20}
+											color={
+												color === "#FFFFFF" || color === "#FFD700"
+													? "#000"
+													: "#fff"
+											}
+										/>
+									)}
+								</TouchableOpacity>
+							))}
+						</View>
+						<TouchableOpacity
+							style={styles.closeColorPickerButton}
+							onPress={() => setShowColorPicker(false)}
+						>
+							<Text style={styles.closeColorPickerText}>Close</Text>
+						</TouchableOpacity>
+					</View>
+				</View>
+			</Modal>
+
+			{/* Text Input Modal */}
+			<Modal
+				visible={showTextModal}
+				transparent={true}
+				animationType="fade"
+				onRequestClose={() => setShowTextModal(false)}
+			>
+				<View style={styles.textModalOverlay}>
+					<View style={styles.textModalContainer}>
+						<Text style={styles.textModalTitle}>Add Text Annotation</Text>
+						<Text style={styles.frameIndicator}>
+							Frame {selectedFrameIndex + 1} •{" "}
+							{formatTime(getCurrentFrameTimestamp())}
+						</Text>
+						<TextInput
+							style={styles.textInput}
+							value={textAnnotation}
+							onChangeText={setTextAnnotation}
+							placeholder="Enter your annotation..."
+							placeholderTextColor="#999"
+							multiline={true}
+							maxLength={100}
+							autoFocus={true}
+						/>
+						<Text style={styles.characterCount}>
+							{textAnnotation.length}/100
+						</Text>
+						<View style={styles.textModalButtons}>
+							<TouchableOpacity
+								style={[styles.modalButton, styles.cancelButton]}
+								onPress={() => {
+									setShowTextModal(false)
+									setTextAnnotation("")
+								}}
+							>
+								<Text style={styles.cancelButtonText}>Cancel</Text>
+							</TouchableOpacity>
+							<TouchableOpacity
+								style={[styles.modalButton, styles.addButton]}
+								onPress={addTextAnnotation}
+								disabled={!textAnnotation.trim()}
+							>
+								<Text
+									style={[
+										styles.addButtonText,
+										!textAnnotation.trim() && styles.disabledButtonText,
+									]}
+								>
+									Add Text
+								</Text>
+							</TouchableOpacity>
+						</View>
+					</View>
+				</View>
+			</Modal>
+		</SafeAreaView>
+	)
+}
+export default VideoAnnotationScreen
