@@ -1,4 +1,5 @@
 import { AntDesign } from "@expo/vector-icons"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
 import React, { useState } from "react"
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native"
@@ -35,14 +36,32 @@ export default function SignInScreen() {
 				}
 			)
 
-			const result = await response.json() // ✅ Only read once
+			const result = await response.json()
 
 			console.log("📥 Login Response:", result)
 
 			if (response.ok) {
-				const userName = result.user?.name || "User"
+				const user = result.user
+				const userName = user?.name || "User"
+				const userRole = user?.role
+				const profileUrl = user?.profilePictureUrl || ""
+
+				// Save to AsyncStorage
+				if (userName) await AsyncStorage.setItem("userName", userName)
+				if (userRole) await AsyncStorage.setItem("userRole", userRole)
+				if (profileUrl)
+					await AsyncStorage.setItem("profilePictureUrl", profileUrl)
+				if (user?.id) await AsyncStorage.setItem("userId", user.id)
+
 				Alert.alert("✅ Login Success", `Welcome, ${userName}!`)
-				router.replace("/coachhome")
+
+				if (userRole === "Coach") {
+					router.replace("/coachhome")
+				} else if (userRole === "Player") {
+					router.replace("/playerhome")
+				} else {
+					Alert.alert("⚠️ Unknown Role", `Unhandled role: ${userRole}`)
+				}
 			} else {
 				Alert.alert("❌ Login Failed", result.message || "Invalid credentials")
 			}

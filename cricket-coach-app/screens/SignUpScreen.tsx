@@ -206,7 +206,7 @@ export default function SignUpScreen() {
 			const accountName = "becomebetterstorage"
 			const containerName = "profile-pictures"
 			const sasToken =
-				"sv=2024-11-04&ss=bfqt&srt=o&sp=rwdlacupiytfx&se=2025-05-27T12:21:40Z&st=2025-05-27T04:21:40Z&spr=https&sig=DDuRX86pR%2FSeBnxi9aP849xtIluglaGWuhAjhJSaxPE%3D" // no '?'
+				"sv=2024-11-04&ss=bfqt&srt=o&sp=rwdlacupiytfx&se=2025-09-02T03:51:16Z&st=2025-05-27T19:51:16Z&spr=https&sig=qTyBjiN05FSygK9%2B4oSDG78wANn7w7BWc7PfRLqNvzA%3D" // no '?'
 			const blobUrl = `https://${accountName}.blob.core.windows.net/${containerName}/${fileName}?${sasToken}`
 
 			const response = await FileSystem.uploadAsync(blobUrl, uri, {

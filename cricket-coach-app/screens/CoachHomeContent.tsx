@@ -1,5 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNavigation } from "@react-navigation/native"
 import { router, useLocalSearchParams } from "expo-router"
+
 import React, { useEffect, useState } from "react"
 import { Image, Text, TouchableOpacity, View } from "react-native"
 import { styles } from "../styles/CoachHomeStyles"
@@ -16,6 +18,19 @@ const HomeContent = () => {
 		}
 	}, [params.studentCount])
 
+	const [coachName, setCoachName] = useState("")
+	const [profileUrl, setProfileUrl] = useState("")
+
+	useEffect(() => {
+		const loadCoachData = async () => {
+			const name = await AsyncStorage.getItem("userName")
+			const photo = await AsyncStorage.getItem("profilePictureUrl")
+			if (name) setCoachName(name)
+			if (photo) setProfileUrl(photo)
+		}
+		loadCoachData()
+	}, [])
+
 	function handleStudent(): void {
 		router.push("/coach-home/StudentScreen")
 	}
@@ -26,11 +41,19 @@ const HomeContent = () => {
 			<View style={styles.header}>
 				<View style={styles.profile}>
 					<Image
-						source={require("../assets/images/boy.png")}
+						source={
+							profileUrl
+								? { uri: profileUrl }
+								: require("../assets/images/boy.png")
+						}
 						style={styles.profileImage}
 					/>
+					<View style={styles.greetingContainer}>
+						<Text style={styles.greetingText}>
+							Hello, {coachName || "Coach"}
+						</Text>
+					</View>
 				</View>
-				<Text>Hello Coach</Text>
 			</View>
 
 			{/* Stats */}

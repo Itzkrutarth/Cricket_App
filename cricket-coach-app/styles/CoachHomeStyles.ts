@@ -8,6 +8,7 @@ export const styles = StyleSheet.create({
 	header: {
 		flexDirection: "row",
 		paddingHorizontal: 20,
+		paddingVertical: 20,
 		alignItems: "center",
 	},
 	menu: {
@@ -28,14 +29,13 @@ export const styles = StyleSheet.create({
 		color: "#111827",
 	},
 	profileImage: {
-		marginTop: 30,
-		width: 40,
-		height: 40,
-		borderRadius: 20,
+		marginRight: 12,
+		width: 70,
+		height: 70,
+		borderRadius: 100,
 		backgroundColor: "#E5E7EB",
 	},
 	stats: {
-		marginTop: 40,
 		paddingHorizontal: 20,
 	},
 	statBox: {
@@ -43,6 +43,15 @@ export const styles = StyleSheet.create({
 		padding: 20,
 		borderRadius: 12,
 		marginBottom: 15,
+	},
+
+	greetingContainer: {
+		justifyContent: "center", // ✅ vertically centers text inside this container
+	},
+
+	greetingText: {
+		fontSize: 16,
+		color: "#000",
 	},
 	statLabel: {
 		fontSize: 14,
