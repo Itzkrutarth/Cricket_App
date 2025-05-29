@@ -4,7 +4,7 @@ const { width } = Dimensions.get("window")
 export const styles = StyleSheet.create({
 	container: {
 		flexGrow: 1,
-		backgroundColor: "#F9FAFB",
+		backgroundColor: "#ffffff",
 		padding: 20,
 	},
 	header: {
@@ -25,7 +25,7 @@ export const styles = StyleSheet.create({
 		marginBottom: 20,
 	},
 	input: {
-		backgroundColor: "#fff",
+		backgroundColor: "#f9f9f9",
 		padding: 12,
 		borderRadius: 10,
 		color: "#000",

@@ -265,18 +265,12 @@ export default function SignUpScreen() {
 	}
 
 	return (
-		<SafeAreaView style={{ flex: 1, backgroundColor: "#f2f2f2" }}>
+		<SafeAreaView style={{ flex: 1, backgroundColor: "#ffffff" }}>
 			<KeyboardAvoidingView
 				style={{ flex: 1 }}
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
 			>
-				<View style={styles.headerContainer}>
-					<TouchableOpacity onPress={() => router.back()}>
-						<Ionicons name="arrow-back" size={24} color="#2563EB" />
-					</TouchableOpacity>
-					<Text style={styles.headerTitle}>Sign Up</Text>
-					<View style={{ width: 24 }} /> {/* Placeholder for symmetry */}
-				</View>
+				
 				<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 					<ScrollView
 						contentContainerStyle={styles.container}

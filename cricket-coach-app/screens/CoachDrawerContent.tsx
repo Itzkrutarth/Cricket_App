@@ -67,66 +67,6 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 					</View>
 				</TouchableOpacity>
 			</View>
-
-			{/* Menu Items */}
-			<TouchableOpacity onPress={() => handleHome()} style={styles.menuItem}>
-				<Feather name="user" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>Home</Text>
-			</TouchableOpacity>
-
-			<TouchableOpacity
-				onPress={() => handlePersonalInfo()}
-				style={styles.menuItem}
-			>
-				<Feather name="user" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>Personal Information</Text>
-			</TouchableOpacity>
-
-			<TouchableOpacity onPress={() => handleStudent()} style={styles.menuItem}>
-				<Feather name="users" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>Students</Text>
-			</TouchableOpacity>
-
-			<TouchableOpacity
-				onPress={() => handleAllvideos()}
-				style={styles.menuItem}
-			>
-				<Feather name="video" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>All Videos</Text>
-			</TouchableOpacity>
-
-			<TouchableOpacity
-				onPress={() => handleAllPicture()}
-				style={styles.menuItem}
-			>
-				<Feather name="image" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>All Pictures</Text>
-			</TouchableOpacity>
-
-			<TouchableOpacity
-				onPress={() => handleFavourite()}
-				style={styles.menuItem}
-			>
-				<Feather name="heart" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>Favourites</Text>
-			</TouchableOpacity>
-
-			<TouchableOpacity onPress={() => handleSetting()} style={styles.menuItem}>
-				<Feather name="settings" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>Settings</Text>
-			</TouchableOpacity>
-
-			{/* Logout */}
-			<TouchableOpacity
-				onPress={() => {
-					console.log("Logging out...")
-					router.replace("/signin") // 👈 redirects to signin screen
-				}}
-				style={styles.logoutItem}
-			>
-				<MaterialIcons name="logout" size={20} color="#DC2626" />
-				<Text style={styles.logoutText}>Logout</Text>
-			</TouchableOpacity>
 		</View>
 	)
 }

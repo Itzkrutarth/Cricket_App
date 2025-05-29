@@ -48,9 +48,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
-    marginTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
   },
   logoutText: {
     marginLeft: 10,

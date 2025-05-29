@@ -9,6 +9,7 @@ export const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   title: {
+    marginTop:20,
     padding: 10,
     marginHorizontal: 16, // equal space left and right
     marginVertical: 10, // equal space top and bottom
@@ -19,6 +20,7 @@ export const styles = StyleSheet.create({
     alignSelf: "center", // centers item inside FlatList/Grid
   },
   placeholder: {
+    marginTop:20,
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',

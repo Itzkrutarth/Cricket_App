@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
     color: "#111827",
   },
   item: {
+    marginTop: 20,
     padding: 10,
     marginHorizontal: 16, // equal space left and right
     marginVertical: 10, // equal space top and bottom
@@ -27,5 +28,13 @@ export const styles = StyleSheet.create({
     width: "100%",
     height: 120,
     resizeMode: "cover",
+  },
+  videoTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 5,
+    color: "#333",
+    paddingHorizontal: 4,
   },
 });
