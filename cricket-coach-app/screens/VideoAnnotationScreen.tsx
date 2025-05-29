@@ -625,7 +625,7 @@ const VideoAnnotationScreen = () => {
 				</View>
 
 				{/* 🎯 NEW: Frame Scrubber Slider */}
-				<View style={{ paddingHorizontal: 16, marginTop: 8 }}>
+				<View style={{ paddingHorizontal: 16, marginVertical: 10 }}>
 					<Slider
 						style={{ width: "100%", height: 40 }}
 						minimumValue={0}

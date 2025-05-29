@@ -124,9 +124,9 @@ export const styles = StyleSheet.create({
 	// Video Frames Strip
 	framesContainer: {
 		backgroundColor: "rgba(0, 0, 0, 0.95)",
+		// backgroundColor: "#ff0000",
 		borderTopWidth: 1,
 		borderTopColor: "rgba(255, 255, 255, 0.1)",
-		paddingTop: 12,
 	},
 
 	framesHeader: {
@@ -160,7 +160,7 @@ export const styles = StyleSheet.create({
 
 	framesScrollView: {
 		paddingHorizontal: 16,
-		paddingBottom: 12,
+		paddingVertical: 10,
 	},
 
 	frameItem: {
