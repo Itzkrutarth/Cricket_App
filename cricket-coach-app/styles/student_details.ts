@@ -1,35 +1,24 @@
-// styles/StudentDetailStyles.ts
-import { StyleSheet, Dimensions } from 'react-native'
+import { StyleSheet, Dimensions } from 'react-native';
 
-const { width } = Dimensions.get('window')
+const { width } = Dimensions.get('window');
+const PROFILE_SIZE = width * 0.5;
+const SHOT_SIZE = (width - 60) / 2; // Two images per row with spacing
 
-const IMAGE_SIZE = width * 0.5;
-
- export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5',},
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    backgroundColor: '#FFF',
-  },
-  headerTitle: {
+export const styles = StyleSheet.create({
+  container: {
     flex: 1,
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1D3557',
+    backgroundColor: '#f5f5f5',
   },
+  scrollContent: {
+    flex: 1,
+  },
+
+  // Header is in Header_1.tsx
 
   profileImage: {
-    width: IMAGE_SIZE,
-    height: IMAGE_SIZE,
-    borderRadius: IMAGE_SIZE / 2,
+    width: PROFILE_SIZE,
+    height: PROFILE_SIZE,
+    borderRadius: PROFILE_SIZE / 2,
     alignSelf: 'center',
     marginTop: 24,
   },
@@ -47,18 +36,62 @@ const IMAGE_SIZE = width * 0.5;
     color: '#6B7280',
   },
 
-  placeholderGrid: {
-    marginTop: 32,
-    height: 200,
-    justifyContent: 'center',
+  // Sample Shots
+  sectionTitle: {
+    marginTop: 30,
+    marginLeft: 20,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1D4ED8',
+  },
+  shotsContainer: {
+    marginTop: 12,
+    paddingHorizontal: 20,
+    gap: 12, // Space between rows
+  },
+  shotRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  shotImage: {
+    width: SHOT_SIZE,
+    height: SHOT_SIZE, // Square images
+    borderRadius: 8,
+  },
+
+  // Record Video
+  recordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1D4ED8',
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    marginTop: 30,
+    marginHorizontal: 20,
+    marginBottom: 40,
+  },
+  recordButtonText: {
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+
+  // Placeholder for a future grid
+  placeholderGrid: {
+    marginTop: 20,
+    marginHorizontal: 20,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    marginHorizontal: 16,
     borderRadius: 8,
   },
   placeholderText: {
     color: '#9CA3AF',
     fontSize: 16,
+    textAlign: 'center',
   },
 });

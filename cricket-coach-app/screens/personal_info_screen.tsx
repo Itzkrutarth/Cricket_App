@@ -11,7 +11,7 @@ const PersonalInfoScreen = () => {
           source={require('../assets/images/boy.png')}
           style={styles.profileImage}
         />
-        <Text style={styles.name}>Coach Mit</Text>
+        <Text style={styles.name}>Mit</Text>
         <Text style={styles.role}>Head Coach</Text>
       </View>
 

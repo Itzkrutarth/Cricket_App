@@ -1,11 +1,20 @@
 import { useNavigation } from "@react-navigation/native"
-import { router } from "expo-router"
-import React from "react"
+import { router, useLocalSearchParams } from "expo-router"
+import React, { useEffect, useState } from "react"
 import { Image, Text, TouchableOpacity, View } from "react-native"
-import { styles } from "../styles/CoachHomeStyles" // Update if your styles path differs
+import { styles } from "../styles/CoachHomeStyles"
 
 const HomeContent = () => {
 	const navigation = useNavigation()
+	const params = useLocalSearchParams()
+	const [studentCount, setStudentCount] = useState(3) // Default count
+
+	// Update student count when returning from StudentScreen
+	useEffect(() => {
+		if (params.studentCount) {
+			setStudentCount(Number(params.studentCount))
+		}
+	}, [params.studentCount])
 
 	function handleStudent(): void {
 		router.push("/coach-home/StudentScreen")
@@ -15,9 +24,6 @@ const HomeContent = () => {
 		<View style={styles.container}>
 			{/* Header */}
 			<View style={styles.header}>
-				{/* <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}>
-          <Text style={styles.menu}>☰</Text>
-        </TouchableOpacity> */}
 				<View style={styles.profile}>
 					<Image
 						source={require("../assets/images/boy.png")}
@@ -34,7 +40,7 @@ const HomeContent = () => {
 					onPress={() => handleStudent()}
 				>
 					<Text style={styles.statLabel}>Students</Text>
-					<Text style={styles.statValue}>25</Text>
+					<Text style={styles.statValue}>{studentCount}</Text>
 				</TouchableOpacity>
 
 				<View style={styles.statBox}>

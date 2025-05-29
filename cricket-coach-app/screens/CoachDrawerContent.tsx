@@ -41,7 +41,7 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
           source={require("../assets/images/boy.png")}
           style={styles.profileImage}
         />
-        <Text style={styles.coachName}>Archit</Text>
+        <Text style={styles.coachName}>Mit</Text>
         <TouchableOpacity>
           <View style={styles.editImageContainer}>
             <Feather name="edit" size={16} color="#1D4ED8" />

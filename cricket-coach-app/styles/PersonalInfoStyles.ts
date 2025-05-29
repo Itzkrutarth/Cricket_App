@@ -30,11 +30,13 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   name: {
+    textAlign:"center",
     fontSize: 22,
     fontWeight: "bold",
     color: "#111827",
   },
   role: {
+    textAlign:"center",
     fontSize: 16,
     color: "#6B7280",
   },

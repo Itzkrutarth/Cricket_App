@@ -1,5 +1,5 @@
 // screens/StudentsScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,12 @@ const initialStudents: Student[] = [
 export default function StudentsScreen() {
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const router = useRouter();
+
+  // Update the home screen whenever student count changes
+  useEffect(() => {
+    // This will pass the current student count back to the home screen
+    router.setParams({ studentCount: students.length.toString() });
+  }, [students.length]);
 
   const addStudent = () => {
     const nextId = (students.length + 1).toString();
