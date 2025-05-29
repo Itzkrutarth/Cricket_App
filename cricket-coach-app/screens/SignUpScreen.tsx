@@ -7,6 +7,7 @@ import * as ImagePicker from "expo-image-picker"
 import { useRouter } from "expo-router"
 import React, { useState } from "react"
 import {
+	ActivityIndicator,
 	Alert,
 	Image,
 	Keyboard,
@@ -37,6 +38,7 @@ export default function SignUpScreen() {
 	const [email, setEmail] = useState("")
 	const [image, setImage] = useState<string | null>(null)
 	const [role, setRole] = useState("")
+	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<Record<string, string>>({
 		name: "",
 		birthDate: "",
@@ -158,23 +160,39 @@ export default function SignUpScreen() {
 	// }
 	const handleSignup = async () => {
 		let profilePictureUrl = null
-		if (image) {
-			const fileName = email.replace(/[@.]/g, "_") + ".jpg"
-			profilePictureUrl = await uploadImageToAzure(image, fileName)
-		}
-		const userData = {
-			name,
-			email,
-			username,
-			password,
-			phoneNumber,
-			gender,
-			role,
-			birthDate,
-			profilePictureUrl,
+
+		// ✅ Validation check (example only, you can expand this)
+		if (!name || !email || !password || !role || !birthDate) {
+			Alert.alert("Missing Fields", "Please fill out all required fields.")
+			return
 		}
 
+		setLoading(true) // ✅ Show spinner after validation
+
 		try {
+			// 📸 Upload profile image if present
+			if (image) {
+				const fileName = email.replace(/[@.]/g, "_") + ".jpg"
+				profilePictureUrl = await uploadImageToAzure(image, fileName)
+			}
+
+			const userData = {
+				name,
+				email,
+				username,
+				password,
+				phoneNumber,
+				gender,
+				role,
+				birthDate,
+				profilePictureUrl,
+			}
+
+			console.log("📤 Sending signup request...")
+
+			// Optional: Add delay to simulate cold start
+			// await new Promise(resolve => setTimeout(resolve, 3000))
+
 			const response = await fetch(
 				"https://becomebetter-api.azurewebsites.net/api/SignUp",
 				{
@@ -191,13 +209,15 @@ export default function SignUpScreen() {
 
 			if (response.ok) {
 				Alert.alert("✅ Signup Success", resultText)
-				router.replace("/coachhome") // or navigate to login
+				router.replace("/coachhome") // or redirect to login
 			} else {
 				Alert.alert("❌ Signup Failed", resultText)
 			}
 		} catch (error) {
 			console.error("⚠️ Signup error:", error)
 			Alert.alert("Error", "Failed to connect to the server.")
+		} finally {
+			setLoading(false) // ✅ Always hide spinner
 		}
 	}
 
@@ -270,7 +290,6 @@ export default function SignUpScreen() {
 				style={{ flex: 1 }}
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
 			>
-				
 				<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 					<ScrollView
 						contentContainerStyle={styles.container}
@@ -460,9 +479,13 @@ export default function SignUpScreen() {
 							<Text style={styles.error}>{error.gender}</Text>
 						) : null}
 
-						<TouchableOpacity style={styles.button} onPress={handleSignup}>
-							<Text style={styles.buttonText}>Create Account</Text>
-						</TouchableOpacity>
+						{loading ? (
+							<ActivityIndicator size="large" color="#1D4ED8" />
+						) : (
+							<TouchableOpacity onPress={handleSignup} style={styles.button}>
+								<Text style={styles.buttonText}>Create Account</Text>
+							</TouchableOpacity>
+						)}
 
 						<TouchableOpacity onPress={() => router.push("/")}>
 							<Text style={styles.footerText}>

@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { DrawerContentComponentProps } from "@react-navigation/drawer"
 import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
-import { Image, Text, TouchableOpacity, View } from "react-native"
+import { Alert, Image, Text, TouchableOpacity, View } from "react-native"
 import { styles } from "../styles/CoachDrawerStyles"
 
 const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
@@ -117,8 +117,26 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 			{/* Logout */}
 			<TouchableOpacity
 				onPress={() => {
-					console.log("Logging out...")
-					router.replace("/signin") // 👈 redirects to signin screen
+					Alert.alert(
+						"Confirm Logout",
+						"Are you sure you want to logout?",
+						[
+							{
+								text: "Cancel",
+								style: "cancel",
+							},
+							{
+								text: "Logout",
+								style: "destructive",
+								onPress: async () => {
+									console.log("Logging out...")
+									await AsyncStorage.clear() // Optional: Clear all stored user data
+									router.replace("/signin")
+								},
+							},
+						],
+						{ cancelable: true }
+					)
 				}}
 				style={styles.logoutItem}
 			>
