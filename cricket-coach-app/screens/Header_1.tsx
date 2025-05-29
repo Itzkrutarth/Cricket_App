@@ -1,13 +1,15 @@
-import { Entypo } from "@expo/vector-icons"
+import { Entypo, Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import React from "react"
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
 type Props = {
 	title: string
+	onEditPress?: () => void
+	playPauseButton?: React.ReactNode
 }
 
-const Header = ({ title }: Props) => {
+const Header = ({ title, onEditPress, playPauseButton }: Props) => {
 	const router = useRouter()
 
 	return (
@@ -16,7 +18,15 @@ const Header = ({ title }: Props) => {
 				<Entypo name="chevron-left" size={30} color="#1D4ED8" />
 			</TouchableOpacity>
 			<Text style={styles.title}>{title}</Text>
-			<View style={{ width: 30 }} /> {/* For symmetrical spacing */}
+			{playPauseButton ? (
+				playPauseButton
+			) : onEditPress ? (
+				<TouchableOpacity onPress={onEditPress}>
+					<Ionicons name="create-outline" size={24} color="blue" />
+				</TouchableOpacity>
+			) : (
+				<View style={{ width: 40 }} />
+			)}
 		</View>
 	)
 }
@@ -26,7 +36,6 @@ export default Header
 const styles = StyleSheet.create({
 	header: {
 		backgroundColor: "#fff",
-		color: "#000",
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
@@ -39,5 +48,10 @@ const styles = StyleSheet.create({
 		fontSize: 20,
 		fontWeight: "600",
 		textAlign: "center",
+	},
+	editText: {
+		color: "#1D4ED8",
+		fontSize: 16,
+		fontWeight: "500",
 	},
 })
