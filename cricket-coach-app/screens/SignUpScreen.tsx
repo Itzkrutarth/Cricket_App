@@ -194,7 +194,7 @@ export default function SignUpScreen() {
 			// await new Promise(resolve => setTimeout(resolve, 3000))
 
 			const response = await fetch(
-				"https://becomebetter-api.azurewebsites.net/api/SignUp",
+				"https://becomebetter-api.azurewebsites.net/api/SignUp?",
 				{
 					method: "POST",
 					headers: {
