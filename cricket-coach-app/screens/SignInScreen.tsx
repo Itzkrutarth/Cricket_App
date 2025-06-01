@@ -30,7 +30,7 @@ export default function SignInScreen() {
 			console.log("📤 Sending login request...")
 
 			const response = await fetch(
-				"https://becomebetter-api.azurewebsites.net/api/SignIn?code=RHv5PZfoUpc9OjQgnS_eHQBdnCtKgUeqV4KzsCu2zednAzFu6mjybw==",
+				"https://becomebetter-api.azurewebsites.net/api/SignIn?",
 				{
 					method: "POST",
 					headers: {
