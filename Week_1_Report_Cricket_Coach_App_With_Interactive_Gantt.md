@@ -95,7 +95,7 @@ Screens designed for both **Coach** and **Player** roles:
 
 
 ## 📁 Repository
-GitHub: [(https://github.com/Mitansh13/Cricket_App](https://github.com/mit510/Cricket_App))
+GitHub: https://github.com/mit510/Cricket_App
 
 ---
 
