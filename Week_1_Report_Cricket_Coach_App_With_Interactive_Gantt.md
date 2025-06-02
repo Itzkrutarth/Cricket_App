@@ -89,9 +89,10 @@ Screens designed for both **Coach** and **Player** roles:
 ---
 
 ## 📊 Project Timeline (May 27 – July 25)
-👉 [View Gantt Chart (Interactive HTML)](/mnt/data/Cricket_Coach_App_Gantt_Chart_Interactive.html)
 
----
+
+---![Cricket_Coach_App_Gantt_Chart_Cleaned](https://github.com/user-attachments/assets/19db4576-4e93-4ae3-8754-7419d21ec2b6)
+
 
 ## 📁 Repository
 GitHub: [https://github.com/Mitansh13/Cricket_App](https://github.com/Mitansh13/Cricket_App)
