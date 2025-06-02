@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { styles } from '../styles/SettingsStyles';
+import { styles } from '../../styles/SettingsStyles';
 // import { AntDesign } from '@expo/vector-icons';
 import Header from './Header_1';
 const SettingsScreen = ({ navigation }: any) => {

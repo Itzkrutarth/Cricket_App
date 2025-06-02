@@ -1,2 +1,2 @@
-import VideoAnnotationScreen from "@/screens/VideoAnnotationScreen";
+import VideoAnnotationScreen from "@/screens/coach_Home_Screen/VideoAnnotationScreen";
 export default VideoAnnotationScreen

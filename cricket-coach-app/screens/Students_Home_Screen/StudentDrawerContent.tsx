@@ -28,25 +28,25 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 	}, [])
 
 	function handleHome(): void {
-		router.push("./StudentHomeScreen")
+		router.push("/studenthome")
 	}
 	function handlePersonalInfo(): void {
-		router.push("./personalinfo_screen")
+		router.push("/student-home/personalinfo_screen")
 	}
 	function handleAllPicture(): void {
-		router.push("./AllPicturesScreen")
+		router.push("/student-home/AllPicturesScreen")
 	}
 	function handleAllVideos(): void {
-		router.push("./AllVideosScreen")
+		router.push("/student-home/AllVideosScreen")
 	}
 	function handleDrills(): void {
-		router.push("./DrillsScreen")
+		router.push("/student-home/DrillsScreen")
 	}
 	function handleSettings(): void {
-		router.push("./SettingsScreen")
+		router.push("/student-home/SettingsScreen")   
 	}
 	function handleCoaches(): void {
-		router.push("./CoachesScreen")
+		router.push("/student-home/CoachesScreen")
 	}
 
 	return (
@@ -56,7 +56,7 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 					source={
 						profilePictureUrl
 							? { uri: profilePictureUrl }
-							: require("../assets/images/boy.png")
+							: require("../../assets/images/boy.png")
 					}
 					style={styles.profileImage}
 				/>

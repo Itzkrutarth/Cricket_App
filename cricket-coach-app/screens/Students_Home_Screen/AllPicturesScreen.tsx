@@ -4,10 +4,10 @@ import { styles } from '@/styles/AllPicturesStyles';
 import Header from './Header_1';
 
 const pictureData = [
-  { id: '1', image: require('../assets/images/cricket.jpg') },
-  { id: '2', image: require('../assets/images/cricket.jpg') },
-  { id: '3', image: require('../assets/images/cricket.jpg') },
-  { id: '4', image: require('../assets/images/cricket.jpg') },
+  { id: '1', image: require('../../assets/images/cricket.jpg') },
+  { id: '2', image: require('../../assets/images/cricket.jpg') },
+  { id: '3', image: require('../../assets/images/cricket.jpg') },
+  { id: '4', image: require('../../assets/images/cricket.jpg') },
 ];
 
 const numColumns = 2;

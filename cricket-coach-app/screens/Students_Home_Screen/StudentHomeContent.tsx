@@ -30,7 +30,7 @@ const HomeContent = () => {
 	}, [])
 
 	function handleCoaches(): void {
-		router.push("./CoachesScreen")
+		router.push("/student-home/CoachesScreen")
 	}
 
 	return (
@@ -41,7 +41,7 @@ const HomeContent = () => {
 						source={
 							profileUrl
 								? { uri: profileUrl }
-								: require("../assets/images/boy.png")
+								: require("../../assets/images/boy.png")
 						}
 						style={styles.profileImage}
 					/>

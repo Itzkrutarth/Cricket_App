@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import Header from '../../screens/Header_1';
+import Header from '../../screens/coach_Home_Screen/Header_1';
 import { styles } from '../../styles/CoachesStyle';
 
 export default function CoachDetailsScreen() {

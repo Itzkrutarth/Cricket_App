@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import React, { useEffect, useState } from "react"
 import { Image, ScrollView, Text, View } from "react-native"
-import { styles } from "../styles/PersonalInfoStyles"
+import { styles } from "../../styles/PersonalInfoStyles"
 import Header from "./Header_1"
 const PersonalInfoScreen = () => {
 	const [name, setName] = useState("Coach")
@@ -29,7 +29,7 @@ const PersonalInfoScreen = () => {
 					source={
 						profilePictureUrl
 							? { uri: profilePictureUrl }
-							: require("../assets/images/boy.png")
+							: require("../../assets/images/boy.png")
 					}
 					style={styles.profileImage}
 				/>

@@ -25,7 +25,7 @@ const VideoPlayerScreen = () => {
 		if (typeof videoSource === "string" && videoSource.startsWith("http")) {
 			return { uri: videoSource }
 		}
-		return require("../assets/videos/jay.mp4")
+		return require("../../assets/videos/jay.mp4")
 	}
 
 	return (

@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from "expo-router"
 
 import React, { useEffect, useState } from "react"
 import { Image, Text, TouchableOpacity, View } from "react-native"
-import { styles } from "../styles/CoachHomeStyles"
+import { styles } from "../../styles/CoachHomeStyles"
 
 const HomeContent = () => {
 	const navigation = useNavigation()
@@ -44,7 +44,7 @@ const HomeContent = () => {
 						source={
 							profileUrl
 								? { uri: profileUrl }
-								: require("../assets/images/boy.png")
+								: require("../../assets/images/boy.png")
 						}
 						style={styles.profileImage}
 					/>

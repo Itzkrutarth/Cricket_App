@@ -1,3 +1,3 @@
-import PersonalInfoScreen from '../../screens/personal_info_screen';
+import PersonalInfoScreen from '../../screens/coach_Home_Screen/personal_info_screen';
 
 export default PersonalInfoScreen;

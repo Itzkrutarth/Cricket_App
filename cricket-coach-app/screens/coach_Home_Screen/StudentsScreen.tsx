@@ -10,7 +10,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Header from './Header_1';
-import { styles } from '../styles/StudentsStyles';
+import { styles } from '../../styles/StudentsStyles';
 
 type Student = {
   id: string;

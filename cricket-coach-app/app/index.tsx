@@ -1,4 +1,4 @@
-import HomeContent from "../screens/CoachHomeContent"
+import HomeContent from "@/screens/coach_Home_Screen/CoachHomeContent"
 import SignInScreen from "../screens/SignInScreen"
 
 // Toggle this manually for now.

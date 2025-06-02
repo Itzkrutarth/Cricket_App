@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, FlatList, Image, Dimensions } from 'react-native';
-import { styles } from '../styles/AllPicturesStyles';
+import { styles } from '../../styles/AllPicturesStyles';
 import Header from './Header_1';
 
 const pictureData = [
-  { id: '1', image: require('../assets/images/cricket.jpg') },
-  { id: '2', image: require('../assets/images/cricket.jpg') },
-  { id: '3', image: require('../assets/images/cricket.jpg') },
-  { id: '4', image: require('../assets/images/cricket.jpg') },
+  { id: '1', image: require('../../assets/images/cricket.jpg') },
+  { id: '2', image: require('../../assets/images/cricket.jpg') },
+  { id: '3', image: require('../../assets/images/cricket.jpg') },
+  { id: '4', image: require('../../assets/images/cricket.jpg') },
   // Add more images here
 ];
 

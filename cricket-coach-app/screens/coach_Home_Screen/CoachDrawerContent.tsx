@@ -4,7 +4,7 @@ import { DrawerContentComponentProps } from "@react-navigation/drawer"
 import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native"
-import { styles } from "../styles/CoachDrawerStyles"
+import { styles } from "../../styles/CoachDrawerStyles"
 
 const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 	navigation,
@@ -55,7 +55,7 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 					source={
 						profilePictureUrl
 							? { uri: profilePictureUrl }
-							: require("../assets/images/boy.png")
+							: require("../../assets/images/boy.png")
 					}
 					style={styles.profileImage}
 				/>

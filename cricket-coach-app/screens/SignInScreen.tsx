@@ -59,7 +59,7 @@ export default function SignInScreen() {
 				if (userRole === "Coach") {
 					router.replace("/coachhome")
 				} else if (userRole === "Player") {
-					router.replace("/playerhome")
+					router.replace("/studenthome")
 				} else {
 					Alert.alert("⚠️ Unknown Role", `Unhandled role: ${userRole}`)
 				}

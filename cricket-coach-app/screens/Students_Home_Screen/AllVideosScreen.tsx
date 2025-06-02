@@ -8,22 +8,22 @@ import Header from './Header_1';
 const videoData = [
   { 
     id: '1', 
-    video: require('../assets/videos/video.mp4'),
+    video: require('../../assets/videos/jay.mp4'),
     title: 'Training Video 1'
   },
   { 
     id: '2', 
-    video: require('../assets/videos/video.mp4'),
+    video: require('../../assets/videos/jay.mp4'),
     title: 'Training Video 2'
   },
   { 
     id: '3', 
-    video: require('../assets/videos/video.mp4'),
+    video: require('../../assets/videos/jay.mp4'),
     title: 'Training Video 3'
   },
   { 
     id: '4', 
-    video: require('../assets/videos/video.mp4'),
+    video: require('../../assets/videos/jay.mp4'),
     title: 'Training Video 4'
   },
 ];

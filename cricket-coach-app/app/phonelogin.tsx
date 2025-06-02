@@ -1,3 +1,3 @@
-import PhoneLoginScreen from "@/screens/PhoneLoginScreen"
+import PhoneLoginScreen from "../screens/PhoneLoginScreen"
 
 export default PhoneLoginScreen

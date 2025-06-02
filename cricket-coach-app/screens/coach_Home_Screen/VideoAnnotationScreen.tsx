@@ -117,7 +117,7 @@ const VideoAnnotationScreen = () => {
 		if (typeof videoSource === "string" && videoSource.startsWith("http")) {
 			return { uri: videoSource }
 		}
-		return require("../assets/videos/jay.mp4")
+		return require("../../assets/videos/jay.mp4")
 	}
 
 	// Get current frame timestamp
@@ -433,7 +433,7 @@ const VideoAnnotationScreen = () => {
 	}
 
 	return (
-		<SafeAreaView style={styles.container}>
+		<View style={styles.container}>
 			<StatusBar barStyle="light-content" backgroundColor="#000" />
 
 			{/* Header */}
@@ -1039,7 +1039,7 @@ const VideoAnnotationScreen = () => {
 					</View>
 				</View>
 			</Modal>
-		</SafeAreaView>
+		</View>
 	)
 }
 export default VideoAnnotationScreen

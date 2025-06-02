@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, FlatList, Image, Dimensions } from 'react-native';
-import { styles } from '../styles/FavouritesStyles';
+import { styles } from '../../styles/FavouritesStyles';
 import Header from './Header_1';
 const favouriteData = [
-  { id: '1', image: require('../assets/images/cricket.jpg') },
-  { id: '2', image: require('../assets/images/cricket.jpg') },
-  { id: '3', image: require('../assets/images/cricket.jpg') },
-  { id: '4', image: require('../assets/images/cricket.jpg') },
+  { id: '1', image: require('../../assets/images/cricket.jpg') },
+  { id: '2', image: require('../../assets/images/cricket.jpg') },
+  { id: '3', image: require('../../assets/images/cricket.jpg') },
+  { id: '4', image: require('../../assets/images/cricket.jpg') },
   // Add more favorite items as needed
 ];
 

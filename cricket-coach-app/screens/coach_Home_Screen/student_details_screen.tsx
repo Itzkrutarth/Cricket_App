@@ -9,7 +9,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Entypo } from '@expo/vector-icons';
 import Header from './Header_1';
-import { styles } from '../styles/student_details';
+import { styles } from '../../styles/student_details';
 
 type Params = {
   id:       string;
