@@ -91,7 +91,7 @@ Screens designed for both **Coach** and **Player** roles:
 ## 📊 Project Timeline (May 27 – July 25)
 
 
----![Cricket_Coach_App_Gantt_Chart_Cleaned](https://github.com/user-attachments/assets/19db4576-4e93-4ae3-8754-7419d21ec2b6)
+![Cricket_Coach_App_Gantt_Chart_Cleaned](https://github.com/user-attachments/assets/19db4576-4e93-4ae3-8754-7419d21ec2b6)
 
 
 ## 📁 Repository
