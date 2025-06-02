@@ -43,7 +43,7 @@ export default function CoachesScreen() {
 
 	const openDetails = (coach: Coach) => {
 		router.push({
-			pathname: "./coach_details",
+			pathname: "/student-home/coach-detail",
 			params: {
 				id: coach.id,
 				name: coach.name,

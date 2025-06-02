@@ -37,7 +37,7 @@ const AllVideosScreen = () => {
 
   const handleVideoPress = (video: any) => {
     router.push({
-      pathname: './VideoPlayerScreen',
+      pathname: '/coach-home/VideoPlayerScreen',
       params: {
         videoSource: JSON.stringify(video.video),
         title: video.title,
