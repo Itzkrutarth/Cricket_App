@@ -98,6 +98,8 @@ Cricket_App/
 ├── screens/          # Page components split by role
 │   ├── Coach/
 │   └── Player/
+├── styles/       
+│   ├── coachHomeStyle..
 ├── services/         # Azure Auth & API services
 ├── store/            # Zustand stores
 ├── utils/            # Helpers and constants
@@ -113,7 +115,7 @@ Cricket_App/
 - Node.js ≥ 18
 - Expo CLI: `npm install -g expo-cli`
 - Azure AD B2C Tenant
-- Android Studio or Xcode for emulator/device testing
+- expo go app for emulator/device testing in  iOS
 
 ### 📦 Installation
 
@@ -126,7 +128,7 @@ npm install
 ### ▶️ Running the App
 
 ```bash
-npx expo start
+npx expo start or npx expo start --tunnel 
 ```
 
 Use Expo Go app to scan the QR code or press `a`/`i` for emulator.
