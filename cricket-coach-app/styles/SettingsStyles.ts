@@ -5,24 +5,31 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  closeButton: {
-    alignSelf: 'flex-end',
+  scrollContainer: {
+    padding: 20,
   },
-  title: {
-    marginTop:20,
-    padding: 10,
-    marginHorizontal: 16, // equal space left and right
-    marginVertical: 10, // equal space top and bottom
-    backgroundColor: "#ffffff",
+  settingItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
     borderRadius: 10,
-    overflow: "hidden",
+    padding: 15,
+    marginBottom: 15,
     elevation: 2,
-    alignSelf: "center", // centers item inside FlatList/Grid
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  placeholder: {
-    marginTop:20,
+  settingLabel: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#333',
+  },
+  note: {
+    marginTop: 30,
     textAlign: 'center',
+    color: '#888',
+    fontSize: 14,
   },
 });

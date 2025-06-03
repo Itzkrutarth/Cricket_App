@@ -1,140 +1,105 @@
-import React, { useState } from "react"
+import React, { useRef, useState } from "react";
 import {
-	View,
-	Text,
-	TouchableOpacity,
-	Dimensions,
-	StatusBar,
-	StyleSheet,
-} from "react-native"
-import { Video, ResizeMode } from "expo-av"
-import { useRouter, useLocalSearchParams } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
-import Header from "./Header_1"
+  View,
+  Text,
+  Dimensions,
+  StatusBar,
+  StyleSheet,
+} from "react-native";
+import { Video, ResizeMode } from "expo-av";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import Header from "./Header_1";
 
-const { width, height } = Dimensions.get("window")
+const { width, height } = Dimensions.get("window");
 
 const VideoPlayerScreen = () => {
-	const router = useRouter()
-	const params = useLocalSearchParams()
-	const [status, setStatus] = useState({})
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const [status, setStatus] = useState({});
+  const videoRef = useRef<Video>(null); // Added ref
 
-	const { title, videoSource } = params
+  const { title, videoPath } = params;
 
-	const getVideoSource = () => {
-		if (typeof videoSource === "string" && videoSource.startsWith("http")) {
-			return { uri: videoSource }
-		}
-		return require("../../assets/videos/jay.mp4")
-	}
+  const getVideoSource = () => {
+    if (typeof videoPath === "string" && videoPath.startsWith("http")) {
+      return { uri: videoPath };
+    }
+    return require("../../assets/videos/jay.mp4"); // fallback
+  };
 
-	return (
-		<View style={styles.container}>
-			<StatusBar hidden />
+  const handleEditPress = async () => {
+    // Pause video
+    if (videoRef.current) {
+      await videoRef.current.pauseAsync();
+    }
+    // Navigate to annotation
+    router.push({
+      pathname: "/coach-home/videoAnnotation",
+      params: { title: title?.toString() || "Video" },
+    });
+  };
 
-			{/* Header */}
-			{/* <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="blue" />
-        </TouchableOpacity>
+  return (
+    <View style={styles.container}>
+      <StatusBar hidden />
+      <Header
+        title={title?.toString() || "Video"}
+        onEditPress={handleEditPress}
+      />
 
-        <Text style={styles.title}>{title}</Text>
+      {/* Video */}
+      <View style={styles.videoContainer}>
+        <Video
+          ref={videoRef} // Attach ref
+          source={getVideoSource()}
+          style={styles.video}
+          useNativeControls
+          resizeMode={ResizeMode.CONTAIN}
+          shouldPlay
+          onPlaybackStatusUpdate={(status) => setStatus(() => status)}
+        />
+      </View>
 
-        <TouchableOpacity
-          onPress={() => router.push('/coach-home/videoAnnotation')}
-          style={styles.annotationIcon}
-        >
-          <Ionicons name="create-outline" size={24} color="blue" />
-        </TouchableOpacity>
-      </View> */}
-			<Header
-				title={title.toString()}
-				onEditPress={() => {
-					console.log("Video annotation tapped!")
-					router.push({
-						pathname: "/coach-home/videoAnnotation",
-						params: {
-							title: title.toString(),
-						},
-					})
-				}}
-			/>
-
-			{/* Video */}
-			<View style={styles.videoContainer}>
-				<Video
-					source={getVideoSource()}
-					style={styles.video}
-					useNativeControls
-					resizeMode={ResizeMode.CONTAIN}
-					shouldPlay
-					onPlaybackStatusUpdate={(status) => setStatus(() => status)}
-				/>
-			</View>
-
-			{/* Info */}
-			<View style={styles.infoSection}>
-				<Text style={styles.videoTitle}>{title}</Text>
-				<Text style={styles.videoDescription}>
-					This is a training video for coaches. Use the controls to play, pause,
-					and seek through the video.
-				</Text>
-			</View>
-		</View>
-	)
-}
+      {/* Info */}
+      <View style={styles.infoSection}>
+        <Text style={styles.videoTitle}>{title}</Text>
+        <Text style={styles.videoDescription}>
+          This is a training video for coaches. Use the controls to play, pause,
+          and seek through the video.
+        </Text>
+      </View>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: "#000",
-	},
-	header: {
-		flexDirection: "row",
-		alignItems: "center",
-		paddingTop: 50,
-		paddingHorizontal: 20,
-		paddingBottom: 10,
-		backgroundColor: "#fff",
-	},
-	backButton: {
-		padding: 8,
-		marginRight: 15,
-	},
-	title: {
-		color: "blue",
-		fontSize: 18,
-		fontWeight: "bold",
-		flex: 1,
-	},
-	annotationIcon: {
-		padding: 8,
-	},
-	videoContainer: {
-		flex: 1,
-		justifyContent: "center",
-		alignItems: "center",
-		backgroundColor: "#f5f5f5",
-	},
-	video: {
-		width: width,
-		height: height * 0.75,
-	},
-	infoSection: {
-		padding: 20,
-		backgroundColor: "#f5f5f5",
-	},
-	videoTitle: {
-		color: "black",
-		fontSize: 20,
-		fontWeight: "bold",
-		marginBottom: 10,
-	},
-	videoDescription: {
-		color: "#c9c9c9",
-		fontSize: 14,
-		lineHeight: 20,
-	},
-})
+  container: { flex: 1, backgroundColor: "#000" },
+  videoContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
+  },
+  video: {
+    width: width,
+    height: height * 0.75,
+  },
+  infoSection: {
+    padding: 20,
+    backgroundColor: "#111",
+  },
+  videoTitle: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  videoDescription: {
+    color: "#c9c9c9",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+});
 
-export default VideoPlayerScreen
+export default VideoPlayerScreen;
