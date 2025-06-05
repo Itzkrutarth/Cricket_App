@@ -9,21 +9,20 @@ import {
   Platform,
   PanResponder,
   Dimensions,
+  Modal,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { Entypo, Ionicons } from "@expo/vector-icons";
+import { Video } from "expo-av";
+import { Entypo } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Header from "./Header_1";
 import { styles } from "@/styles/recordVideoStyle";
 
 type Params = { studentId: string };
-const STORAGE_BASE_URL =
-  "https://becomebetterstorage.blob.core.windows.net/videos";
-const SAS_TOKEN =
-  "?sp=rcw&st=2025-06-02T16:24:53Z&se=2025-09-02T00:24:53Z&spr=https&sv=2024-11-04&sr=c&sig=oJF5hsw550wrpdKPH%2Bg0saP3FD01e2c5NuNYB14Paj8%3D";
+type RecordedVideo = { uri: string };
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 export default function RecordVideoScreen() {
   const { studentId } = useLocalSearchParams<Params>();
@@ -37,16 +36,13 @@ export default function RecordVideoScreen() {
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Gesture tracking
   const [initialDistance, setInitialDistance] = useState(0);
   const [initialZoom, setInitialZoom] = useState(0);
   const [showZoomSlider, setShowZoomSlider] = useState(false);
-  const zoomSliderTimeout = useRef<NodeJS.Timeout | null>(null);
+  const zoomSliderTimeout = useRef<number | null>(null);
+  const [recordedVideoUri, setRecordedVideoUri] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
-  const getBlobUploadUrl = (fileName: string) =>
-    `${STORAGE_BASE_URL}/${fileName}${SAS_TOKEN}`;
-
-  // Calculate distance between two touch points
   const getDistance = (touches: any[]) => {
     if (touches.length < 2) return 0;
     const [touch1, touch2] = touches;
@@ -55,7 +51,6 @@ export default function RecordVideoScreen() {
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  // Show zoom slider temporarily
   const showZoomSliderTemporarily = () => {
     setShowZoomSlider(true);
     if (zoomSliderTimeout.current) {
@@ -66,37 +61,31 @@ export default function RecordVideoScreen() {
     }, 2000);
   };
 
-  // Pan responder for pinch-to-zoom and drag gestures
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (evt) => {
       const touches = evt.nativeEvent.touches;
       if (touches.length === 2) {
-        // Pinch gesture started
         const distance = getDistance(touches);
         setInitialDistance(distance);
         setInitialZoom(zoom);
         showZoomSliderTemporarily();
       } else if (touches.length === 1) {
-        // Single touch - could be for vertical zoom drag
         showZoomSliderTemporarily();
       }
     },
     onPanResponderMove: (evt, gestureState) => {
       const touches = evt.nativeEvent.touches;
-      
       if (touches.length === 2 && initialDistance > 0) {
-        // Pinch-to-zoom
         const currentDistance = getDistance(touches);
         const distanceRatio = currentDistance / initialDistance;
-        const zoomChange = (distanceRatio - 1) * 0.5; // Sensitivity adjustment
+        const zoomChange = (distanceRatio - 1) * 0.5;
         const newZoom = Math.max(0, Math.min(1, initialZoom + zoomChange));
         setZoom(newZoom);
       } else if (touches.length === 1) {
-        // Vertical drag to zoom (like iPhone camera)
-        const verticalMovement = -gestureState.dy; // Negative because up should zoom in
-        const zoomSensitivity = 0.003; // Adjust this for sensitivity
+        const verticalMovement = -gestureState.dy;
+        const zoomSensitivity = 0.003;
         const zoomChange = verticalMovement * zoomSensitivity;
         const newZoom = Math.max(0, Math.min(1, zoom + zoomChange));
         setZoom(newZoom);
@@ -123,11 +112,7 @@ export default function RecordVideoScreen() {
       if (!permission.granted) {
         const { granted } = await requestPermission();
         if (!granted) {
-          Alert.alert(
-            "Camera Permission Required",
-            "Please enable camera access to record videos.",
-            [{ text: "OK" }]
-          );
+          Alert.alert("Camera Permission Required", "Please enable camera access to record videos.", [{ text: "OK" }]);
         }
       }
     };
@@ -141,7 +126,7 @@ export default function RecordVideoScreen() {
       setRecordingTime((prev) => {
         const newTime = prev + 1;
         if (newTime >= 5) {
-          handleStopRecording();
+          handleStopRecording(newTime);
         }
         return newTime;
       });
@@ -179,39 +164,45 @@ export default function RecordVideoScreen() {
         recordingOptions = { ...recordingOptions, quality: "medium" };
       }
 
-      const video = await cameraRef.current.recordAsync(recordingOptions);
-      if (!video?.uri) throw new Error("Recording failed: video URI missing.");
+      const video: RecordedVideo = await cameraRef.current.recordAsync(recordingOptions);
+      setRecordedVideoUri(video?.uri);
+      setShowPreview(true);
     } catch (error: any) {
-      Alert.alert(
-        "Recording Error",
-        error.message || "Could not record video. Please try again."
-      );
+      Alert.alert("Recording Error", error.message || "Could not record video. Please try again.");
     } finally {
       setIsRecording(false);
       stopRecordingTimer();
     }
   };
 
-  const handleStopRecording = async () => {
+  const handleStopRecording = async (timeFromTimer?: number) => {
     if (!cameraRef.current || !isRecording) return;
 
     try {
-      const finalTime = recordingTime;
-      await cameraRef.current.stopRecording();
-      Alert.alert(
-        "Recording Complete",
-        `Video recorded successfully (${formatTime(finalTime)})!`,
-        [{ text: "OK" }]
-      );
+      const finalTime = timeFromTimer || recordingTime;
+      const video: RecordedVideo = await cameraRef.current.stopRecording();
+
+      setRecordedVideoUri(video?.uri);
+      setShowPreview(true);
     } catch (error: any) {
       console.error("Stop recording error:", error);
+    } finally {
+      setIsRecording(false);
+      stopRecordingTimer();
     }
   };
 
-  // Quick zoom presets
   const setZoomLevel = (level: number) => {
     setZoom(level);
     showZoomSliderTemporarily();
+  };
+
+  const handleRecordButtonPress = () => {
+    if (isRecording) {
+      handleStopRecording();
+    } else {
+      handleRecord();
+    }
   };
 
   if (!permission) {
@@ -238,197 +229,120 @@ export default function RecordVideoScreen() {
     <View style={styles.container}>
       <Header title="Record Video" />
 
-      <View style={{ flex: 1, position: 'relative' }}>
+      <View style={{ flex: 1, position: "relative" }}>
         <CameraView
           ref={cameraRef}
           style={styles.cameraPreview}
           facing="back"
           zoom={zoom}
           mode="video"
-          onCameraReady={() => {
-            console.log("Camera is ready");
-            setIsReady(true);
-          }}
-          onMountError={(error) => {
-            console.error("Camera mount error:", error);
-            Alert.alert("Camera Error", "Failed to initialize camera: " + error.message);
-          }}
+          onCameraReady={() => setIsReady(true)}
+          onMountError={(error) => Alert.alert("Camera Error", "Failed to initialize camera: " + error.message)}
         />
 
-        {/* Gesture overlay */}
-        <View 
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'transparent',
-          }}
-          {...panResponder.panHandlers}
-        />
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "transparent" }} {...panResponder.panHandlers} />
 
-        {/* Zoom Level Indicator */}
         {(showZoomSlider || zoom > 0) && (
-          <View style={{
-            position: "absolute",
-            top: 50,
-            right: 20,
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            borderRadius: 20,
-            minWidth: 60,
-            alignItems: 'center',
-          }}>
-            <Text style={{ 
-              color: "white", 
-              fontSize: 14, 
-              fontWeight: "bold",
-              textAlign: "center"
-            }}>
+          <View
+            style={{
+              position: "absolute",
+              top: 50,
+              right: 20,
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 20,
+              minWidth: 60,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 14, fontWeight: "bold", textAlign: "center" }}>
               {zoom === 0 ? "1x" : `${(1 + zoom * 4).toFixed(1)}x`}
             </Text>
           </View>
         )}
 
-        {/* Vertical Zoom Slider */}
-        {showZoomSlider && (
-          <View style={{
-            position: "absolute",
-            right: 30,
-            top: 100,
-            bottom: 150,
-            width: 4,
-            backgroundColor: "rgba(255, 255, 255, 0.3)",
-            borderRadius: 2,
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-          }}>
-            <View style={{
-              position: 'absolute',
-              bottom: 0,
-              width: 4,
-              height: `${zoom * 100}%`,
-              backgroundColor: "white",
-              borderRadius: 2,
-            }} />
-            <View style={{
-              position: 'absolute',
-              bottom: `${zoom * 100}%`,
-              width: 12,
-              height: 12,
-              backgroundColor: "white",
-              borderRadius: 6,
-              marginBottom: -6,
-            }} />
-          </View>
-        )}
-
-        {/* Recording indicator */}
         {isRecording && (
-          <View style={{
-            position: "absolute", 
-            top: 20, 
-            left: 0, 
-            right: 0, 
-            alignItems: "center"
-          }}>
-            <View style={{
-              backgroundColor: "rgba(255, 0, 0, 0.8)",
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              borderRadius: 20,
-              flexDirection: "row",
-              alignItems: "center",
-            }}>
-              <View style={{
-                width: 8, 
-                height: 8, 
-                backgroundColor: "white",
-                borderRadius: 4, 
-                marginRight: 8,
-              }} />
-              <Text style={{
-                color: "white", 
-                fontSize: 16, 
-                fontWeight: "bold",
-              }}>
-                REC {formatTime(recordingTime)}
-              </Text>
+          <View style={{ position: "absolute", top: 20, left: 0, right: 0, alignItems: "center" }}>
+            <View style={{ backgroundColor: "rgba(255, 0, 0, 0.8)", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, flexDirection: "row", alignItems: "center" }}>
+              <View style={{ width: 8, height: 8, backgroundColor: "white", borderRadius: 4, marginRight: 8 }} />
+              <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>REC {formatTime(recordingTime)}</Text>
             </View>
           </View>
         )}
-
-        {/* Instructions */}
       </View>
 
       <View style={styles.controls}>
-        {/* Quick Zoom Buttons */}
-        <View style={{ 
-          flexDirection: "row", 
-          marginBottom: 20,
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          <TouchableOpacity 
-            onPress={() => setZoomLevel(0)}
-            style={[
-              quickZoomButtonStyle,
-              zoom === 0 && { backgroundColor: "rgba(255, 255, 255, 0.3)" }
-            ]}
-          >
-            <Text style={quickZoomTextStyle}>1x</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            onPress={() => setZoomLevel(0.25)}
-            style={[
-              quickZoomButtonStyle,
-              Math.abs(zoom - 0.25) < 0.05 && { backgroundColor: "rgba(255, 255, 255, 0.3)" }
-            ]}
-          >
-            <Text style={quickZoomTextStyle}>2x</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            onPress={() => setZoomLevel(0.5)}
-            style={[
-              quickZoomButtonStyle,
-              Math.abs(zoom - 0.5) < 0.05 && { backgroundColor: "rgba(255, 255, 255, 0.3)" }
-            ]}
-          >
-            <Text style={quickZoomTextStyle}>3x</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            onPress={() => setZoomLevel(1)}
-            style={[
-              quickZoomButtonStyle,
-              zoom === 1 && { backgroundColor: "rgba(255, 255, 255, 0.3)" }
-            ]}
-          >
-            <Text style={quickZoomTextStyle}>5x</Text>
-          </TouchableOpacity>
+        <View style={{ flexDirection: "row", marginBottom: 20, alignItems: "center", justifyContent: "center" }}>
+          {[
+            { level: 0, label: "1x" },
+            { level: 0.25, label: "2x" },
+            { level: 0.5, label: "3x" },
+            { level: 1, label: "5x" },
+          ].map((item, idx) => (
+            <TouchableOpacity key={idx} onPress={() => setZoomLevel(item.level)} style={[quickZoomButtonStyle, Math.abs(zoom - item.level) < 0.05 && { backgroundColor: "rgba(255, 255, 255, 0.3)" }]}>
+              <Text style={quickZoomTextStyle}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Record/Stop Button */}
-        <TouchableOpacity
-          onPress={isRecording ? handleStopRecording : handleRecord}
-          disabled={!isReady}
-          style={[
-            styles.recordButton,
-            isRecording && styles.recordButtonActive,
-            !isReady && styles.recordButtonDisabled,
-          ]}
-        >
-          {isRecording ? (
-            <Entypo name="controller-stop" size={36} color="#fff" />
-          ) : (
-            <Entypo name="controller-record" size={36} color="#fff" />
-          )}
+        <TouchableOpacity onPress={handleRecordButtonPress} disabled={!isReady} style={[styles.recordButton, isRecording && styles.recordButtonActive, !isReady && styles.recordButtonDisabled]}>
+          {isRecording ? <Entypo name="controller-stop" size={36} color="#fff" /> : <Entypo name="controller-record" size={36} color="#fff" />}
         </TouchableOpacity>
       </View>
+
+      {/* Video Preview Modal */}
+      <Modal
+        visible={showPreview}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowPreview(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: "black" }}>
+          <View style={{ position: "absolute", top: 50, left: 20, right: 20, zIndex: 1, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <TouchableOpacity
+              onPress={() => setShowPreview(false)}
+              style={{ backgroundColor: "rgba(0, 0, 0, 0.7)", padding: 12, borderRadius: 25, flexDirection: "row", alignItems: "center" }}
+            >
+              <Entypo name="chevron-left" size={24} color="white" />
+              <Text style={{ color: "white", marginLeft: 5, fontSize: 16 }}>Back</Text>
+            </TouchableOpacity>
+
+            <Text style={{ color: "white", fontSize: 18, fontWeight: "bold", backgroundColor: "rgba(0, 0, 0, 0.7)", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 }}>
+              Video Preview
+            </Text>
+          </View>
+
+          {recordedVideoUri && (
+            <Video source={{ uri: recordedVideoUri }} style={{ flex: 1 }} useNativeControls isLooping shouldPlay={false} />
+          )}
+
+          <View style={{ position: "absolute", bottom: 50, left: 20, right: 20, flexDirection: "row", justifyContent: "space-around" }}>
+            <TouchableOpacity
+              onPress={() => {
+                console.log("✅ Video saved to logs:");
+                console.log("URI:", recordedVideoUri);
+                console.log("Duration (approx):", recordingTime, "seconds");
+                setShowPreview(false);
+              }}
+              style={{ backgroundColor: "rgba(255, 255, 255, 0.9)", paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, flexDirection: "row", alignItems: "center" }}
+            >
+              <Entypo name="check" size={20} color="green" />
+              <Text style={{ color: "green", marginLeft: 8, fontWeight: "bold" }}>Done</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                setShowPreview(false);
+              }}
+              style={{ backgroundColor: "rgba(255, 0, 0, 0.9)", paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, flexDirection: "row", alignItems: "center" }}
+            >
+              <Entypo name="controller-record" size={20} color="white" />
+              <Text style={{ color: "white", marginLeft: 8, fontWeight: "bold" }}>Record Again</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -440,7 +354,7 @@ const quickZoomButtonStyle = {
   borderRadius: 20,
   marginHorizontal: 5,
   minWidth: 45,
-  alignItems: 'center' as const,
+  alignItems: "center" as const,
 };
 
 const quickZoomTextStyle = {
