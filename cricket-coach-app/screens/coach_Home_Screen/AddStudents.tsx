@@ -236,6 +236,7 @@ export default function AddStudent() {
                 placeholder="Select Gender"
                 listMode="SCROLLVIEW"
                 style={{
+                  
                   borderColor: '#ddd',
                   borderWidth: 1,
                   borderRadius: 8,

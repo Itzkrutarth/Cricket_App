@@ -3,13 +3,18 @@ import { StyleSheet, Dimensions } from "react-native";
 const { width, height } = Dimensions.get("window");
 
 export const styles = StyleSheet.create({
+  // Root container
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
   },
+
+  // Camera preview
   cameraPreview: {
     flex: 1,
   },
+
+  // Recording indicator overlay
   recordingIndicator: {
     position: "absolute",
     top: 130, // just below header
@@ -18,12 +23,33 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 4,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  recordingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#FF0000",
+    marginRight: 8,
   },
   recordingText: {
     color: "#ff3333",
     fontWeight: "bold",
   },
+  timerText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FF0000",
+    marginLeft: 8,
+  },
+  remainingText: {
+    fontSize: 14,
+    color: "#FF6B6B",
+    marginLeft: 8,
+  },
 
+  // Controls
   controls: {
     padding: 20,
     alignItems: "center",
@@ -37,30 +63,14 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  recordingDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#FF0000",
-    marginRight: 8,
-  },
-  timerText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FF0000",
-    marginLeft: 8,
-  },
-  remainingText: {
-    fontSize: 14,
-    color: "#FF6B6B",
-    marginLeft: 8,
-  },
   recordButtonActive: {
     backgroundColor: "#FF4444",
   },
   recordButtonDisabled: {
     opacity: 0.5,
   },
+
+  // Stop button
   stopButton: {
     backgroundColor: "#FF0000",
     paddingHorizontal: 20,
@@ -73,7 +83,8 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  // Add these styles to your recordVideoStyle.ts
+
+  // Centered loading/permission UI
   center: {
     flex: 1,
     justifyContent: "center",
@@ -85,6 +96,8 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
+
+  // Permission UI
   permissionText: {
     fontSize: 18,
     textAlign: "center",
