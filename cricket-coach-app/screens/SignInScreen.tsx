@@ -16,63 +16,61 @@ export default function SignInScreen() {
 	const [loading, setLoading] = useState(false)
 
 	const handleLogin = async () => {
-		const validationError = validateSignIn(email.trim(), password.trim())
+	const validationError = validateSignIn(email.trim(), password.trim());
 
-		if (validationError) {
-			setError(validationError)
-			return
-		}
-
-		setError("")
-		setLoading(true) // ✅ Only after passing validation
-
-		try {
-			console.log("📤 Sending login request...")
-
-			const response = await fetch(
-				"https://becomebetter-api.azurewebsites.net/api/SignIn?",
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ email, password }),
-				}
-			)
-
-			const result = await response.json()
-
-			if (response.ok) {
-				const user = result.user
-				const userName = user?.name || "User"
-				const userRole = user?.role
-				const profileUrl = user?.profilePictureUrl || ""
-
-				if (userName) await AsyncStorage.setItem("userName", userName)
-				if (userRole) await AsyncStorage.setItem("userRole", userRole)
-				if (profileUrl)
-					await AsyncStorage.setItem("profilePictureUrl", profileUrl)
-				if (user?.id) await AsyncStorage.setItem("userId", user.id)
-
-				Alert.alert("✅ Login Success", `Welcome, ${userName}!`)
-
-				if (userRole === "Coach") {
-					router.replace("/coachhome")
-				} else if (userRole === "Player") {
-					router.replace("/studenthome")
-				} else {
-					Alert.alert("⚠️ Unknown Role", `Unhandled role: ${userRole}`)
-				}
-			} else {
-				Alert.alert("❌ Login Failed", result.message || "Invalid credentials")
-			}
-		} catch (err) {
-			console.error("⚠️ Login Error:", err)
-			Alert.alert("Error", "Login request failed.")
-		} finally {
-			setLoading(false)
-		}
+	if (validationError) {
+		setError(validationError);
+		return;
 	}
+
+	setError("");
+	setLoading(true);
+
+	try {
+		const response = await fetch(
+			"https://becomebetter-api.azurewebsites.net/api/SigninJWT",
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ email, password }),
+			}
+		);
+
+		const result = await response.json();
+
+		if (response.ok) {
+			const { token, name, role, id, profilePic } = result;
+
+			await AsyncStorage.multiSet([
+				["@token", token],
+				["@name", name],
+				["@role", role],
+				["@id", id],
+				["@profilePic", profilePic || ""],
+			]);
+
+			Alert.alert("✅ Login Success", `Welcome, ${name}!`);
+
+			if (role === "Coach") {
+				router.replace("/coachhome");
+			} else if (role === "Player") {
+				router.replace("/studenthome");
+			} else {
+				Alert.alert("⚠️ Unknown Role", `Unhandled role: ${role}`);
+			}
+		} else {
+			Alert.alert("❌ Login Failed", result.message || "Invalid credentials");
+		}
+	} catch (err) {
+		console.error("⚠️ Login Error:", err);
+		Alert.alert("Error", "Login request failed.");
+	} finally {
+		setLoading(false);
+	}
+};
+
 
 	return (
 		<View style={styles.container}>
