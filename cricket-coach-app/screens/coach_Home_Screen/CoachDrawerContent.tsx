@@ -19,8 +19,8 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 
 	useEffect(() => {
 		const loadCoachData = async () => {
-			const name = await AsyncStorage.getItem("userName")
-			const photo = await AsyncStorage.getItem("profilePictureUrl")
+			const name = await AsyncStorage.getItem("@userName")
+			const photo = await AsyncStorage.getItem("@profilePicture")
 			if (name) setCoachName(name)
 			if (photo) setProfilePictureUrl(photo)
 		}

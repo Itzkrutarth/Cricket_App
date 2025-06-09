@@ -1,2 +1,2 @@
-import StudentHomeScreen from "./student-home/StudentHomeScreen";
+import StudentHomeScreen from "../screens/Students_Home_Screen/StudentHomeScreen";
 export default StudentHomeScreen;

@@ -24,13 +24,11 @@ export default function SignInScreen() {
 		}
 
 		setError("")
-		setLoading(true) // ✅ Only after passing validation
+		setLoading(true)
 
 		try {
-			console.log("📤 Sending login request...")
-
 			const response = await fetch(
-				"https://becomebetter-api.azurewebsites.net/api/SignIn?",
+				"https://becomebetter-api.azurewebsites.net/api/SigninJWT",
 				{
 					method: "POST",
 					headers: {
@@ -43,25 +41,24 @@ export default function SignInScreen() {
 			const result = await response.json()
 
 			if (response.ok) {
-				const user = result.user
-				const userName = user?.name || "User"
-				const userRole = user?.role
-				const profileUrl = user?.profilePictureUrl || ""
+				const { token, name, role, id, profilePic } = result
 
-				if (userName) await AsyncStorage.setItem("userName", userName)
-				if (userRole) await AsyncStorage.setItem("userRole", userRole)
-				if (profileUrl)
-					await AsyncStorage.setItem("profilePictureUrl", profileUrl)
-				if (user?.id) await AsyncStorage.setItem("userId", user.id)
+				await AsyncStorage.multiSet([
+					["@token", token],
+					["@userName", name],
+					["@role", role],
+					["@id", id],
+					["@profilePicture", profilePic || ""],
+				])
 
-				Alert.alert("✅ Login Success", `Welcome, ${userName}!`)
+				Alert.alert("✅ Login Success", `Welcome, ${name}!`)
 
-				if (userRole === "Coach") {
+				if (role === "Coach") {
 					router.replace("/coachhome")
-				} else if (userRole === "Player") {
+				} else if (role === "Player") {
 					router.replace("/studenthome")
 				} else {
-					Alert.alert("⚠️ Unknown Role", `Unhandled role: ${userRole}`)
+					Alert.alert("⚠️ Unknown Role", `Unhandled role: ${role}`)
 				}
 			} else {
 				Alert.alert("❌ Login Failed", result.message || "Invalid credentials")

@@ -1,10 +1,12 @@
-import HomeContent from "@/screens/coach_Home_Screen/CoachHomeContent"
-import SignInScreen from "../screens/SignInScreen"
-
-// Toggle this manually for now.
-// Set to true to simulate logged-in user
-const isLoggedIn = false
+import { useEffect } from "react";
+import { useRouter } from "expo-router";
 
 export default function Index() {
-	return isLoggedIn ? <HomeContent /> : <SignInScreen />
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/signin"); // Safe default
+  }, []);
+
+  return null;
 }

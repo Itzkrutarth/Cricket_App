@@ -1,35 +1,24 @@
 import { styles } from "@/styles/StudentHomeStyles"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { useNavigation } from "@react-navigation/native"
-import { router, useLocalSearchParams } from "expo-router"
+import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { Image, Text, TouchableOpacity, View } from "react-native"
 
-const HomeContent = () => {
-	const navigation = useNavigation()
-	const params = useLocalSearchParams()
-	const [coachCount, setCoachCount] = useState(3)
-
-	useEffect(() => {
-		if (params.coachCount) {
-			setCoachCount(Number(params.coachCount))
-		}
-	}, [params.coachCount])
-
+const StudentHomeContent = () => {
 	const [coachName, setCoachName] = useState("")
 	const [profileUrl, setProfileUrl] = useState("")
 
 	useEffect(() => {
 		const loadCoachData = async () => {
-			const name = await AsyncStorage.getItem("userName")
-			const photo = await AsyncStorage.getItem("profilePictureUrl")
+			const name = await AsyncStorage.getItem("@userName")
+			const photo = await AsyncStorage.getItem("@profilePicture")
 			if (name) setCoachName(name)
 			if (photo) setProfileUrl(photo)
 		}
 		loadCoachData()
 	}, [])
 
-	function handleCoaches(): void {
+	const handleCoaches = () => {
 		router.push("/student-home/CoachesScreen")
 	}
 
@@ -47,18 +36,15 @@ const HomeContent = () => {
 					/>
 					<View style={styles.greetingContainer}>
 						<Text style={styles.greetingText}>
-							Hello, {coachName || "Coach"}
+							Hello, {coachName || "Player"}
 						</Text>
 					</View>
 				</View>
 			</View>
 			<View style={styles.stats}>
-				<TouchableOpacity
-					style={styles.statBox}
-					onPress={() => handleCoaches()}
-				>
+				<TouchableOpacity style={styles.statBox} onPress={handleCoaches}>
 					<Text style={styles.statLabel}>Coaches</Text>
-					<Text style={styles.statValue}>{coachCount}</Text>
+					<Text style={styles.statValue}>3</Text>
 				</TouchableOpacity>
 				<View style={styles.statBox}>
 					<Text style={styles.statLabel}>Sessions</Text>
@@ -73,4 +59,4 @@ const HomeContent = () => {
 	)
 }
 
-export default HomeContent
+export default StudentHomeContent
