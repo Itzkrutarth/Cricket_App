@@ -1,208 +1,449 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  // Container styles
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8f9fc",
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // Header styles
   header: {
     flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     alignItems: "center",
   },
   profile: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  profileImage: {
-    marginRight: 12,
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "#E5E7EB",
-  },
-  greetingContainer: {
-    justifyContent: "center",
-  },
-  greetingText: {
-    fontSize: 16,
-    color: "#000",
-  },
-
-  // Stats Grid
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  statBox: {
-    width: "48%",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 15,
-  },
-  statLabel: {
-    fontSize: 13,
-    color: "#fff",
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-    marginTop: 4,
-  },
-  blueBox: {
-    backgroundColor: "#1D4ED8",
-  },
-  purpleBox: {
-    backgroundColor: "#7C3AED",
-  },
-  greenBox: {
-    backgroundColor: "#059669",
-  },
-  orangeBox: {
-    backgroundColor: "#EA580C",
-  },
-
-  // Student Join Requests
-  requestsContainer: {
-    paddingHorizontal: 20,
-    marginTop: 15,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "#1D3557",
-  },
-  requestCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 10,
-    marginVertical: 4,
-    elevation: 1,
-  },
-  requestImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  requestInfo: {
     flex: 1,
   },
-  requestName: {
-    fontSize: 14,
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  greetingContainer: {
+    marginLeft: 12,
+  },
+  greetingText: {
+    fontSize: 18,
     fontWeight: "600",
-    color: "#1D3557",
+    color: "#333",
   },
-  requestRole: {
-    fontSize: 12,
-    color: "#666",
-  },
-  requestCareer: {
-    fontSize: 11,
-    color: "#999",
-  },
-  emptyText: {
-    fontSize: 13,
-    color: "#666",
-  },
-
-  // Events
-  eventsContainer: {
-    paddingHorizontal: 20,
-    marginTop: 15,
-    marginBottom: 30,
-  },
-  eventCard: {
-    backgroundColor: "#E0E7FF",
-    borderRadius: 8,
-    padding: 12,
-    marginVertical: 4,
-  },
-  eventTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1D3557",
-  },
-  eventDate: {
+  subGreeting: {
     fontSize: 12,
     color: "#666",
     marginTop: 2,
   },
+  notificationButton: {
+    padding: 8,
+    position: "relative",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#e74a3b",
+    borderRadius: 10,
+    width: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
 
-  // Modal
+  // Stats grid styles
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    padding: 8,
+  },
+  statBox: {
+    width: "48%",
+    margin: "1%",
+    padding: 16,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  blueBox: {
+    backgroundColor: "#4e73df",
+  },
+  purpleBox: {
+    backgroundColor: "#6f42c1",
+  },
+  greenBox: {
+    backgroundColor: "#1cc88a",
+  },
+  orangeBox: {
+    backgroundColor: "#f6c23e",
+  },
+  statLabel: {
+    color: "#fff",
+    fontSize: 14,
+    marginTop: 8,
+  },
+  statValue: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: 4,
+  },
+
+  // Section headers
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  viewAllText: {
+    color: "#4e73df",
+    fontSize: 14,
+  },
+
+  // Join requests styles
+  requestsContainer: {
+    marginTop: 8,
+  },
+  requestsBadge: {
+    backgroundColor: "#e74a3b",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+  requestsBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  requestCard: {
+    width: 200,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    margin: 8,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  requestImage: {
+    width: "100%",
+    height: 120,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  requestInfo: {
+    marginBottom: 8,
+  },
+  requestName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  requestRole: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
+  },
+  requestActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  quickAcceptButton: {
+    backgroundColor: "#1cc88a",
+    padding: 8,
+    borderRadius: 4,
+    flex: 1,
+    marginRight: 4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  quickRejectButton: {
+    backgroundColor: "#e74a3b",
+    padding: 8,
+    borderRadius: 4,
+    flex: 1,
+    marginLeft: 4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // Empty state styles
+  emptyState: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    margin: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 12,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: "#999",
+    marginTop: 4,
+  },
+
+  // Events styles
+  eventsContainer: {
+    marginTop: 16,
+  },
+  eventCard: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 12,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  eventTypeIndicator: {
+    width: 4,
+    height: 40,
+    borderRadius: 2,
+    marginRight: 12,
+  },
+  eventInfo: {
+    flex: 1,
+  },
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  eventDate: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+  eventDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+
+  // Videos styles
+  
+  videoCoach:{
+marginTop: 16,
+    marginBottom: 32,
+    width: 180,
+    marginLeft: 16,
+  },
+  
+  videosContainer: {
+    marginTop: 16,
+    marginBottom: 32,
+  },
+  videoCard: {
+    width: 180,
+    marginLeft: 16,
+  },
+  videoThumbnail: {
+    width: "100%",
+    height: 100,
+    borderRadius: 8,
+  },
+  videoDuration: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  videoDurationText: {
+    color: "#fff",
+    fontSize: 12,
+  },
+  videoTitle: {
+    fontSize: 14,
+    color: "#333",
+    marginTop: 8,
+  },
+  videoCategory: {
+    fontSize: 12,
+    color: "#4e73df",
+    marginTop: 4,
+    fontWeight: "600",
+  },
+
+  // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContent: {
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 8,
+    width: "90%",
+    maxHeight: "85%",
     padding: 16,
-    alignItems: "center",
-    marginHorizontal: 20,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    width: "100%",
-    marginBottom: 8,
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "600",
-    color: "#1D3557",
+    color: "#333",
   },
   modalImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginVertical: 8,
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 12,
   },
   modalRole: {
-    fontSize: 14,
+    fontSize: 16,
+    color: "#4e73df",
     fontWeight: "600",
-    color: "#1D3557",
-    marginTop: 4,
+    marginBottom: 8,
   },
   modalCareer: {
-    fontSize: 12,
+    fontSize: 14,
     color: "#666",
-    textAlign: "center",
-    marginVertical: 6,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  performanceContainer: {
+    marginBottom: 16,
+  },
+  performanceTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  performanceMetrics: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  metricItem: {
+    alignItems: "center",
+    backgroundColor: "#f8f9fc",
+    borderRadius: 8,
+    padding: 12,
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  metricLabel: {
+    fontSize: 14,
+    color: "#666",
+  },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 4,
   },
   modalActions: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-    width: "100%",
+    marginTop: 16,
   },
   actionButton: {
     flex: 1,
-    marginHorizontal: 5,
-    paddingVertical: 8,
-    borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    padding: 12,
+    borderRadius: 4,
+    marginHorizontal: 4,
   },
   acceptButton: {
-    backgroundColor: "#1D3557",
+    backgroundColor: "#1cc88a",
   },
   rejectButton: {
-    backgroundColor: "#dc3545",
+    backgroundColor: "#e74a3b",
   },
   actionButtonText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
+    marginLeft: 8,
   },
+  // Add these to your CoachHomeStyles.ts
+formGroup: {
+  marginBottom: 15,
+},
+formLabel: {
+  fontSize: 14,
+  color: '#555',
+  marginBottom: 5,
+  fontWeight: '500',
+},
+formInput: {
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 6,
+  padding: 10,
+  fontSize: 16,
+},
+typeSelector: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  marginVertical: 5,
+},
+typeButton: {
+  paddingVertical: 8,
+  paddingHorizontal: 12,
+  borderRadius: 20,
+  marginRight: 8,
+  marginBottom: 8,
+},
+selectedTypeButton: {
+  borderWidth: 2,
+  borderColor: '#fff',
+},
+typeButtonText: {
+  color: '#fff',
+  fontSize: 14,
+},
+deleteButton: {
+  backgroundColor: '#e74a3b',
+},
+saveButton: {
+  backgroundColor: '#4e73df', 
+},
+eventForm: {
+  padding: 15,
+  // flex: 1,  
+},
+
 });
