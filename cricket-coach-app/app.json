@@ -1,53 +1,54 @@
 {
-	"expo": {
-		"name": "Become Better",
-		"slug": "cricket-coach-app",
-		"version": "1.0.0",
-		"orientation": "portrait",
-		"icon": "./assets/images/splash.png",
-		"scheme": "cricketcoachapp",
-		"splash": {
-			"image": "./assets/images/splash.png",
-			"resizeMode": "contain",
-			"backgroundColor": "#ffffff"
-		},
-		"userInterfaceStyle": "automatic",
-		"newArchEnabled": true,
-		"ios": {
-			"supportsTablet": true
-		},
-		"android": {
-			"adaptiveIcon": {
-				"foregroundImage": "./assets/images/splash.png",
-				"backgroundColor": "#ffffff"
-			},
-			"edgeToEdgeEnabled": true
-		},
-		"web": {
-			"bundler": "metro",
-			"output": "static",
-			"favicon": "./assets/images/favicon.png"
-		},
-		"plugins": [
-			"expo-router",
-			[
-				"expo-splash-screen",
-				{
-					"image": "./assets/images/splash.png",
-					"imageWidth": 200,
-					"resizeMode": "contain",
-					"backgroundColor": "#ffffff"
-				}
-			],
-			[
-				"expo-camera",
-				{
-					"cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to record videos."
-				}
-			]
-		],
-		"experiments": {
-			"typedRoutes": true
-		}
-	}
+  "expo": {
+    "name": "Become Better",
+    "slug": "cricket-coach-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/splash.png",
+    "scheme": "cricketcoachapp",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/splash.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to record videos."
+        }
+      ],
+      "expo-video"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
 }

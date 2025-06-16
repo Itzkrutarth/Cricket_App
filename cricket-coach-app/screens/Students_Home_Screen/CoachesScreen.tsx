@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react"
-import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native"
+import {
+	View,
+	Text,
+	Image,
+	TouchableOpacity,
+	ScrollView,
+	GestureResponderEvent,
+} from "react-native"
 import { Feather } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import Header from "./Header_1"
@@ -7,39 +14,49 @@ import { styles } from "@/styles/CoachesStyle"
 
 type Coach = {
 	id: string
+	username: string
 	name: string
 	photoUrl: string
+	email?: string
+	role?: string
 }
 
-const initialCoaches: Coach[] = [
-	{ id: "1", name: "Andy", photoUrl: "https://picsum.photos/300/300?1" },
-	{ id: "2", name: "Brian", photoUrl: "https://picsum.photos/300/300?2" },
-	{ id: "3", name: "Josh", photoUrl: "https://picsum.photos/300/300?3" },
-]
-
 export default function CoachesScreen() {
-	const [coaches, setCoaches] = useState<Coach[]>(initialCoaches)
+	const [coaches, setCoaches] = useState<Coach[]>([])
 	const router = useRouter()
 
 	useEffect(() => {
-		router.setParams({ coachCount: coaches.length.toString() })
-	}, [coaches.length])
+		const fetchCoaches = async () => {
+			try {
+				const response = await fetch(
+					"https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Coach"
+				)
+				const data = await response.json()
 
-	const addCoach = () => {
-		const nextId = (coaches.length + 1).toString()
-		setCoaches((curr) => [
-			...curr,
-			{
-				id: nextId,
-				name: `New ${nextId}`,
-				photoUrl: "https://picsum.photos/300/300?rand",
-			},
-		])
-	}
+				const formatted: Coach[] = data.map((user: any) => ({
+					id: user.id,
+					username: user.username || "",
+					name:
+						user.name ||
+						`${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+						"Unnamed Coach",
+					email: user.email || "",
+					role: user.role || "",
+					photoUrl:
+						user.profilePictureUrl ||
+						user.photoUrl ||
+						"https://cdn-icons-png.flaticon.com/512/149/149071.png",
+				}))
 
-	const removeCoach = () => {
-		setCoaches((curr) => curr.slice(0, -1))
-	}
+				setCoaches(formatted)
+				router.setParams({ coachCount: formatted.length.toString() })
+			} catch (err) {
+				console.error("❌ Failed to fetch coaches:", err)
+			}
+		}
+
+		fetchCoaches()
+	}, [])
 
 	const openDetails = (coach: Coach) => {
 		router.push({
@@ -47,9 +64,17 @@ export default function CoachesScreen() {
 			params: {
 				id: coach.id,
 				name: coach.name,
+				username: coach.username,
 				photoUrl: coach.photoUrl,
 			},
 		})
+	}
+	function addCoach(event: GestureResponderEvent): void {
+		throw new Error("Function not implemented.")
+	}
+
+	function removeCoach(event: GestureResponderEvent): void {
+		throw new Error("Function not implemented.")
 	}
 
 	return (

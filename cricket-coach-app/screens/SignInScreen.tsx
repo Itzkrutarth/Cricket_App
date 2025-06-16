@@ -46,6 +46,7 @@ export default function SignInScreen() {
 				await AsyncStorage.multiSet([
 					["@token", token],
 					["@userName", name],
+					["@userEmail", email],
 					["@role", role],
 					["@id", id],
 					["@profilePicture", profilePic || ""],
