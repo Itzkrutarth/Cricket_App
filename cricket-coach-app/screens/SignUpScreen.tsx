@@ -2,7 +2,7 @@ import DateTimePicker, {
 	DateTimePickerEvent,
 } from "@react-native-community/datetimepicker"
 import * as FileSystem from "expo-file-system"
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import * as ImageManipulator from "expo-image-manipulator"
 import * as ImagePicker from "expo-image-picker"
 import { useRouter } from "expo-router"
@@ -160,70 +160,70 @@ export default function SignUpScreen() {
 	// 	}
 	// }
 	const handleSignup = async () => {
-	let profilePictureUrl = null;
+		let profilePictureUrl = null
 
-	if (!name || !email || !password || !role || !birthDate) {
-		Alert.alert("Missing Fields", "Please fill out all required fields.");
-		return;
-	}
-
-	setLoading(true);
-
-	try {
-		if (image) {
-			const fileName = email.replace(/[@.]/g, "_") + ".jpg";
-			profilePictureUrl = await uploadImageToAzure(image, fileName);
+		if (!name || !email || !password || !role || !birthDate) {
+			Alert.alert("Missing Fields", "Please fill out all required fields.")
+			return
 		}
 
-		const userData = {
-			name,
-			email,
-			username,
-			password,
-			phoneNumber,
-			gender,
-			role,
-			birthDate,
-			profilePictureUrl,
-		};
+		setLoading(true)
 
-		const response = await fetch(
-			"https://becomebetter-api.azurewebsites.net/api/SignupJWT",
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(userData),
+		try {
+			if (image) {
+				const fileName = email.replace(/[@.]/g, "_") + ".jpg"
+				profilePictureUrl = await uploadImageToAzure(image, fileName)
 			}
-		);
 
-		const result = await response.json();
+			const userData = {
+				name,
+				email,
+				username,
+				password,
+				phoneNumber,
+				gender,
+				role,
+				birthDate,
+				profilePictureUrl,
+			}
 
-		if (response.ok) {
-			const { token, name, role, id, profilePic } = result;
+			const response = await fetch(
+				"https://becomebetter-api.azurewebsites.net/api/SignupJWT",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(userData),
+				}
+			)
 
-			await AsyncStorage.multiSet([
-				["@token", token],
-				["@name", name],
-				["@role", role],
-				["@id", id],
-				["@profilePic", profilePic || ""],
-			]);
+			const result = await response.json()
 
-			Alert.alert("✅ Signup Success", `Welcome, ${name}!`);
-			router.replace(role === "Coach" ? "/coachhome" : "/studenthome");
-		} else {
-			Alert.alert("❌ Signup Failed", result.message || "Signup error");
+			if (response.ok) {
+				const { token, name, role, id, profilePic } = result
+
+				await AsyncStorage.multiSet([
+					["@token", token],
+					["@name", name],
+					["@userEmail", email],
+					["@role", role],
+					["@id", id],
+					["@profilePic", profilePic || ""],
+				])
+
+				Alert.alert("✅ Signup Success", `Welcome, ${name}!`)
+				router.replace(role === "Coach" ? "/coachhome" : "/studenthome")
+			} else {
+				Alert.alert("❌ Signup Failed", result.message || "Signup error")
+			}
+		} catch (error) {
+			console.error("⚠️ Signup error:", error)
+			Alert.alert("Error", "Failed to connect to the server.")
+		} finally {
+			setLoading(false)
 		}
-	} catch (error) {
-		console.error("⚠️ Signup error:", error);
-		Alert.alert("Error", "Failed to connect to the server.");
-	} finally {
-		setLoading(false);
 	}
-};
-
 
 	const uploadImageToAzure = async (uri: string, fileName: string) => {
 		try {
