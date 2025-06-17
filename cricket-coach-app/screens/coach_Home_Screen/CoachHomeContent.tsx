@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { router, useLocalSearchParams } from "expo-router"
 import React, { useEffect, useState, useCallback } from "react"
 import {
@@ -17,6 +16,8 @@ import {
 import { Feather } from "@expo/vector-icons"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { styles } from "../../styles/CoachHomeStyles"
+import { RootState } from "@/store"
+import { useSelector } from "react-redux"
 
 // --------- Types
 export interface Student {
@@ -219,8 +220,10 @@ const getEventColor = (type: Event["type"]) => {
 // --------- Main Component
 const HomeContent = () => {
 	const params = useLocalSearchParams()
-	const [coachName, setCoachName] = useState("")
-	const [profileUrl, setProfileUrl] = useState("")
+	const coachName = useSelector((state: RootState) => state.user.name)
+	const profileUrl = useSelector(
+		(state: RootState) => state.user.profilePicture
+	)
 	const [selectedRequest, setSelectedRequest] = useState<Student | null>(null)
 	const [students, setStudents] = useState<Student[]>(dummyStudents)
 	const [joinRequests, setJoinRequests] = useState<Student[]>(dummyJoinRequests)
@@ -253,35 +256,15 @@ const HomeContent = () => {
 
 	const fetchRealStudentCount = async () => {
 		try {
-			const response = await fetch(
-				"https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Player"
-			)
-			const data = await response.json()
-
+			const staticTotal = 25 // or any number you want to mock
 			setStats((prev) => ({
 				...prev,
-				totalStudents: data.length || 0,
+				totalStudents: staticTotal,
 			}))
 		} catch (error) {
 			console.error("❌ Failed to fetch total student count", error)
 		}
 	}
-
-	// const calculateStats = useCallback(() => {
-	// 	const myStudents = students.filter((s) => s.isMyStudent).length
-	// 	const totalStudents = students.length + joinRequests.length
-	// 	const upcomingEvents = events.filter(
-	// 		(e) => new Date(e.date) >= new Date()
-	// 	).length
-
-	// 	setStats({
-	// 		myStudents,
-	// 		totalStudents,
-	// 		sessions: upcomingEvents,
-	// 		videos: videos.length,
-	// 		events: events.length,
-	// 	})
-	// }, [students, events, videos, joinRequests])
 
 	const calculateStats = useCallback(() => {
 		const myStudents = students.filter((s) => s.isMyStudent).length
@@ -302,28 +285,10 @@ const HomeContent = () => {
 		const loadInitialStats = async () => {
 			await fetchRealStudentCount() // total from API
 			calculateStats() // rest from dummy/local data
+			setLoading(false)
 		}
 		loadInitialStats()
 	}, [calculateStats])
-
-	useEffect(() => {
-		const loadCoachData = async () => {
-			try {
-				setLoading(true)
-				const [name, photo] = await Promise.all([
-					AsyncStorage.getItem("@userName"),
-					AsyncStorage.getItem("@profilePicture"),
-				])
-				if (name) setCoachName(name)
-				if (photo) setProfileUrl(photo)
-			} catch (error) {
-				Alert.alert("Error", "Failed to load coach data")
-			} finally {
-				setLoading(false)
-			}
-		}
-		loadCoachData()
-	}, [])
 
 	const onRefresh = useCallback(async () => {
 		setRefreshing(true)

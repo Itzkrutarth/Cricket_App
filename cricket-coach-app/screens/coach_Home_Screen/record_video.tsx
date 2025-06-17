@@ -17,6 +17,10 @@ import { Video } from "expo-av"
 import { Entypo } from "@expo/vector-icons"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import Header from "./Header_1"
+
+import { useSelector } from "react-redux"
+import { RootState } from "@/store"
+
 import { styles } from "@/styles/recordVideoStyle"
 
 type Params = { studentId: string }
@@ -156,6 +160,8 @@ export default function RecordVideoScreen() {
 		}
 	}, [])
 
+	const userEmail = useSelector((state: RootState) => state.user.email)
+
 	useEffect(() => {
 		const requestCameraPermission = async () => {
 			if (!permission) return
@@ -201,7 +207,6 @@ export default function RecordVideoScreen() {
 			.toString()
 			.padStart(2, "0")}`
 	}
-
 	const handleRecord = async () => {
 		if (!cameraRef.current || isRecording || !isReady) return
 		if (!permission?.granted) {
@@ -220,10 +225,8 @@ export default function RecordVideoScreen() {
 				recordingOptions = { ...recordingOptions, quality: "medium" }
 			}
 
-			const video: RecordedVideo = await cameraRef.current.recordAsync(
-				recordingOptions
-			)
-			setRecordedVideoUri(video?.uri)
+			const video = await cameraRef.current.recordAsync(recordingOptions)
+			setRecordedVideoUri(video?.uri ?? null)
 			setShowPreview(true)
 		} catch (error: any) {
 			Alert.alert(
@@ -241,9 +244,10 @@ export default function RecordVideoScreen() {
 
 		try {
 			const finalTime = timeFromTimer || recordingTime
-			const video: RecordedVideo = await cameraRef.current.stopRecording()
 
-			setRecordedVideoUri(video?.uri)
+			await cameraRef.current.stopRecording() // ✅ No return value
+
+			// `setRecordedVideoUri` should already be triggered inside recordAsync flow
 			setShowPreview(true)
 		} catch (error: any) {
 			console.error("Stop recording error:", error)
@@ -516,7 +520,7 @@ export default function RecordVideoScreen() {
 									console.log("URI:", recordedVideoUri)
 									console.log("Duration (approx):", recordingTime, "seconds")
 
-									const coachName = "gautamgambhir@gmail.com" // Ideally from auth context
+									const coachName = userEmail || "unknown@user.com"
 									const filename = `video_${Date.now()}.mp4`
 
 									handleVideoUpload(
