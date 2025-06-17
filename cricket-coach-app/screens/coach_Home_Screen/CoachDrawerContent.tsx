@@ -1,10 +1,12 @@
 import { Feather, MaterialIcons } from "@expo/vector-icons"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { DrawerContentComponentProps } from "@react-navigation/drawer"
 import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native"
 import { styles } from "../../styles/CoachDrawerStyles"
+import { useDispatch, useSelector } from "react-redux"
+import { clearUser } from "@/store/userSlice"
+import { RootState } from "@/store"
 
 const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 	navigation,
@@ -14,18 +16,11 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 		navigation.navigate(screen as never)
 	}
 
-	const [coachName, setCoachName] = useState("Coach")
-	const [profilePictureUrl, setProfilePictureUrl] = useState("")
+	const dispatch = useDispatch()
 
-	useEffect(() => {
-		const loadCoachData = async () => {
-			const name = await AsyncStorage.getItem("@userName")
-			const photo = await AsyncStorage.getItem("@profilePicture")
-			if (name) setCoachName(name)
-			if (photo) setProfilePictureUrl(photo)
-		}
-		loadCoachData()
-	}, [])
+	const user = useSelector((state: RootState) => state.user)
+	const coachName = user.name || "Coach"
+	const profilePictureUrl = user.profilePicture || ""
 
 	function handleHome(): void {
 		router.push("/coachhome")
@@ -130,7 +125,7 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 								style: "destructive",
 								onPress: async () => {
 									console.log("Logging out...")
-									await AsyncStorage.clear() // Optional: Clear all stored user data
+									dispatch(clearUser())
 									router.replace("/signin")
 								},
 							},
