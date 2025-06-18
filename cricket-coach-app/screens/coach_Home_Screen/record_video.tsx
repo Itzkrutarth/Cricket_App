@@ -19,9 +19,9 @@ import { useRouter, useLocalSearchParams } from "expo-router"
 import Header from "./Header_1"
 
 import { useSelector } from "react-redux"
-import { RootState } from "@/store"
 
 import { styles } from "@/styles/recordVideoStyle"
+import { RootState } from "@/store/store"
 
 type Params = { studentId: string }
 type RecordedVideo = { uri: string }

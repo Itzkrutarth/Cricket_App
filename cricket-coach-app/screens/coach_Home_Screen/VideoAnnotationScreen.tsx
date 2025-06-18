@@ -437,40 +437,6 @@ const VideoAnnotationScreen = () => {
 			<StatusBar barStyle="light-content" backgroundColor="#000" />
 
 			{/* Header */}
-			{/* <View style={styles.header}>
-				<TouchableOpacity
-					style={styles.headerButton}
-					onPress={exitAnnotationMode}
-				>
-					<Ionicons name="arrow-back" size={24} color="white" />
-				</TouchableOpacity>
-
-				<Text style={styles.headerTitle} numberOfLines={1}>
-					Annotate: {title}
-				</Text>
-
-				<View style={styles.headerActions}>
-					{hasChanges && (
-						<TouchableOpacity
-							style={styles.saveHeaderButton}
-							onPress={saveAnnotations}
-						>
-							<Ionicons name="save" size={20} color="white" />
-						</TouchableOpacity>
-					)}
-
-					<TouchableOpacity
-						style={styles.headerButton}
-						onPress={toggleVideoPlayback}
-					>
-						<Ionicons
-							name={isVideoPlaying ? "pause" : "play"}
-							size={20}
-							color="white"
-						/>
-					</TouchableOpacity>
-				</View>
-			</View> */}
 
 			<Header
 				title={`Annotate: ${title?.toString() || "Video"}`}

@@ -255,7 +255,6 @@ const HomeContent = () => {
 		videos: 0,
 		events: 0,
 	})
-
 	const fetchRealStudentCount = async () => {
 		try {
 			const response = await fetch(
@@ -272,31 +271,33 @@ const HomeContent = () => {
 			if (!response.ok) throw new Error("Failed to fetch student list")
 
 			const data = await response.json()
-			const totalCount = data.length || 0
+
+			const myStudents = data.filter((student: any) =>
+				student.coaches?.includes(user.id)
+			)
 
 			setStats((prev) => ({
 				...prev,
-				totalStudents: totalCount,
+				myStudents: myStudents.length,
+				totalStudents: data.length,
 			}))
 		} catch (error) {
-			console.error("❌ Failed to fetch total student count", error)
+			console.error("❌ Failed to fetch student stats", error)
 		}
 	}
 
 	const calculateStats = useCallback(() => {
-		const myStudents = students.filter((s) => s.isMyStudent).length
 		const upcomingEvents = events.filter(
 			(e) => new Date(e.date) >= new Date()
 		).length
 
 		setStats((prev) => ({
-			...prev, // keep totalStudents from API
-			myStudents,
+			...prev, // preserve myStudents + totalStudents
 			sessions: upcomingEvents,
 			videos: videos.length,
 			events: events.length,
 		}))
-	}, [students, events, videos])
+	}, [events, videos])
 
 	useEffect(() => {
 		const loadInitialStats = async () => {
@@ -328,7 +329,6 @@ const HomeContent = () => {
 			pathname: "/coach-home/StudentScreen",
 			params: {
 				viewMode: "my",
-				students: JSON.stringify(students.filter((s) => s.isMyStudent)),
 			},
 		})
 	}
@@ -337,7 +337,6 @@ const HomeContent = () => {
 			pathname: "/coach-home/StudentScreen",
 			params: {
 				viewMode: "all",
-				students: JSON.stringify(students),
 			},
 		})
 	}
