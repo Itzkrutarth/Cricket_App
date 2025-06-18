@@ -45,9 +45,8 @@ function AppLayout() {
 
 	return (
 		<ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-			<Stack screenOptions={{ headerShown: false }} />
-			<StatusBar style="auto" />
 			<Slot />
+			<StatusBar style="auto" />
 		</ThemeProvider>
 	)
 }
@@ -56,7 +55,7 @@ export default function RootLayout() {
 	return (
 		<Provider store={store}>
 			<PersistGate loading={null} persistor={persistor}>
-				<Stack screenOptions={{ headerShown: false }} />
+				<AppLayout />
 			</PersistGate>
 		</Provider>
 	)

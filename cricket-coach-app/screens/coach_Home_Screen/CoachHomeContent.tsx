@@ -16,8 +16,9 @@ import {
 import { Feather } from "@expo/vector-icons"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { styles } from "../../styles/CoachHomeStyles"
-import { RootState } from "@/store"
+
 import { useSelector } from "react-redux"
+import { RootState } from "@/store/store"
 
 // --------- Types
 export interface Student {
@@ -244,6 +245,7 @@ const HomeContent = () => {
 		description: "",
 	})
 	const [showDatePicker, setShowDatePicker] = useState(false)
+	const user = useSelector((state: RootState) => state.user)
 	const [showTimePicker, setShowTimePicker] = useState(false)
 
 	const [stats, setStats] = useState<CoachStats>({
@@ -256,10 +258,25 @@ const HomeContent = () => {
 
 	const fetchRealStudentCount = async () => {
 		try {
-			const staticTotal = 25 // or any number you want to mock
+			const response = await fetch(
+				"https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Player",
+				{
+					method: "GET",
+					headers: {
+						Authorization: `Bearer ${user.token}`,
+						"Content-Type": "application/json",
+					},
+				}
+			)
+
+			if (!response.ok) throw new Error("Failed to fetch student list")
+
+			const data = await response.json()
+			const totalCount = data.length || 0
+
 			setStats((prev) => ({
 				...prev,
-				totalStudents: staticTotal,
+				totalStudents: totalCount,
 			}))
 		} catch (error) {
 			console.error("❌ Failed to fetch total student count", error)

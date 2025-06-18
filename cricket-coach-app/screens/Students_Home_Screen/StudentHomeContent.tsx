@@ -1,5 +1,5 @@
 // src/components/StudentHome.tsx
-import AsyncStorage from "@react-native-async-storage/async-storage"
+//import AsyncStorage from "@react-native-async-storage/async-storage"
 import { router, useLocalSearchParams } from "expo-router"
 import React, { useEffect, useState, useCallback } from "react"
 import {
@@ -26,12 +26,12 @@ import {
 	dummyVideos,
 	getEventColor,
 } from "../../app/student-home/CoachData"
+import { useSelector } from "react-redux"
+import { RootState } from "@/store/store"
 
 const StudentHomeContent = () => {
 	const params = useLocalSearchParams()
 	const [coachCount, setCoachCount] = useState(0)
-	const [studentName, setStudentName] = useState("")
-	const [profileUrl, setProfileUrl] = useState("")
 	const [selectedRequest, setSelectedRequest] = useState<Coach | null>(null)
 	const [coaches, setCoaches] = useState<Coach[]>(dummyCoaches)
 	const [coachRequests, setCoachRequests] =
@@ -40,6 +40,11 @@ const StudentHomeContent = () => {
 	const [videos, setVideos] = useState<Video[]>(dummyVideos)
 	const [refreshing, setRefreshing] = useState(false)
 	const [loading, setLoading] = useState(true)
+
+	const studentName = useSelector((state: RootState) => state.user.name)
+	const profileUrl = useSelector(
+		(state: RootState) => state.user.profilePicture
+	)
 
 	const [stats, setStats] = useState<StudentStats>({
 		myCoach: 2,
@@ -76,31 +81,12 @@ const StudentHomeContent = () => {
 				setCoachCount(data.length || 0)
 			} catch (err) {
 				console.error("❌ Failed to load coach count", err)
+			} finally {
+				setLoading(false) // ✅ make sure loading stops
 			}
 		}
 
 		fetchCoachCount()
-	}, [])
-
-	useEffect(() => {
-		const loadStudentData = async () => {
-			try {
-				setLoading(true)
-				const [name, photo] = await Promise.all([
-					AsyncStorage.getItem("@userName"),
-					AsyncStorage.getItem("@profilePicture"),
-				])
-
-				if (name) setStudentName(name)
-				if (photo) setProfileUrl(photo)
-			} catch (error) {
-				console.error("Error loading student data:", error)
-				Alert.alert("Error", "Failed to load student data")
-			} finally {
-				setLoading(false)
-			}
-		}
-		loadStudentData()
 	}, [])
 
 	const onRefresh = useCallback(async () => {
