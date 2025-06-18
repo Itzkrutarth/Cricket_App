@@ -3,10 +3,13 @@ const { CosmosClient } = require("@azure/cosmos")
 module.exports = async function (context, req) {
 	const endpoint = process.env.COSMOS_DB_ENDPOINT
 	const key = process.env.COSMOS_DB_KEY
-	const databaseId = "becomebetter-db"
+	const databaseId = "becomebetter"
 	const containerId = "users"
 
-	const role = req.query.role // optional query param
+	const role = req.query.role // optional
+
+	context.log("🔍 Incoming role filter:", role)
+	context.log("✅ Connecting to CosmosDB:", endpoint)
 
 	try {
 		const client = new CosmosClient({ endpoint, key })
@@ -19,6 +22,8 @@ module.exports = async function (context, req) {
 			  }
 			: { query: "SELECT * FROM c" }
 
+		context.log("🧠 Query to be executed:", JSON.stringify(query))
+
 		const { resources: users } = await container.items.query(query).fetchAll()
 
 		context.res = {
@@ -27,9 +32,10 @@ module.exports = async function (context, req) {
 		}
 	} catch (err) {
 		context.log.error("❌ Error in GetUsers function:", err.message)
+		context.log.error("Stack Trace:", err.stack)
 		context.res = {
 			status: 500,
-			body: { message: "Internal Server Error" },
+			body: { message: "Internal Server Error", error: err.message },
 		}
 	}
 }
