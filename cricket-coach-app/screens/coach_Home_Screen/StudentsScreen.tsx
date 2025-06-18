@@ -13,6 +13,8 @@ import { useRouter, useLocalSearchParams } from "expo-router"
 import { useFocusEffect } from "@react-navigation/native"
 import Header from "./Header_1"
 import { styles } from "../../styles/StudentsStyles"
+import { useSelector } from "react-redux"
+import { RootState } from "@/store/store"
 
 type Student = {
 	username: string
@@ -26,6 +28,7 @@ type Student = {
 	experience?: string
 	birthDate?: Date
 	gender?: string
+	coaches: string[] // ✅ required for relationship filtering
 }
 export default function StudentsScreen() {
 	const [loading, setLoading] = useState(true)
@@ -36,6 +39,7 @@ export default function StudentsScreen() {
 	const viewMode = params.viewMode || "my"
 	const DEFAULT_PROFILE_PIC =
 		"https://cdn-icons-png.flaticon.com/512/149/149071.png"
+	const coachId = useSelector((state: RootState) => state.user.id)
 
 	useEffect(() => {
 		const fetchStudents = async () => {
@@ -47,7 +51,6 @@ export default function StudentsScreen() {
 
 				const formatted: Student[] = data.map((user: any) => {
 					const name = user.name.trim()
-
 					return {
 						id: user.id,
 						name: name || "Unnamed Player",
@@ -59,13 +62,18 @@ export default function StudentsScreen() {
 						experience: user.experience || "",
 						birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
 						gender: user.gender || "",
-						photoUrl:
-							user.profilePictureUrl || user.photoUrl || DEFAULT_PROFILE_PIC,
+						photoUrl: user.profilePictureUrl || DEFAULT_PROFILE_PIC,
+						coaches: user.coaches || [], // ✅ Add this
 					}
 				})
 
-				setStudents(formatted)
-				router.setParams({ studentCount: formatted.length.toString() })
+				const filtered =
+					viewMode === "my"
+						? formatted.filter((s) => s.coaches?.includes(coachId))
+						: formatted
+
+				setStudents(filtered)
+				router.setParams({ studentCount: filtered.length.toString() })
 				setLoading(false)
 			} catch (err) {
 				console.error("❌ Failed to load students", err)
@@ -81,6 +89,32 @@ export default function StudentsScreen() {
 			// Refresh logic if needed
 		}, [])
 	)
+	const handleAssignStudent = async (student: Student) => {
+		try {
+			const updatedCoaches = [...(student.coaches || []), coachId]
+
+			await fetch(`https://becomebetter-api.azurewebsites.net/api/UpdateUser`, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					id: student.id,
+					coaches: updatedCoaches,
+				}),
+			})
+
+			Alert.alert("Success", `${student.name} has been added to your students.`)
+			setStudents((prev) =>
+				prev.map((s) =>
+					s.id === student.id ? { ...s, coaches: updatedCoaches } : s
+				)
+			)
+		} catch (error) {
+			console.error("Failed to assign student:", error)
+			Alert.alert("Error", "Something went wrong while assigning student.")
+		}
+	}
 
 	const addStudent = () => {
 		router.push("/coach-home/add_student")
@@ -95,8 +129,36 @@ export default function StudentsScreen() {
 				{
 					text: "Remove",
 					style: "destructive",
-					onPress: () => {
-						setStudents((curr) => curr.filter((s) => s.id !== student.id))
+					onPress: async () => {
+						try {
+							// 👇 Filter out the coach from the student's coaches list
+							const updatedCoaches = student.coaches.filter(
+								(id) => id !== coachId
+							)
+
+							// 👇 Call backend to update the student document
+							await fetch(
+								`https://becomebetter-api.azurewebsites.net/api/UpdateUser`,
+								{
+									method: "PUT",
+									headers: {
+										"Content-Type": "application/json",
+									},
+									body: JSON.stringify({
+										id: student.id,
+										coaches: updatedCoaches,
+									}),
+								}
+							)
+
+							// 👇 Update local UI
+							setStudents((curr) => curr.filter((s) => s.id !== student.id))
+
+							Alert.alert("Removed", `${student.name} has been removed.`)
+						} catch (err) {
+							console.error("❌ Failed to remove student:", err)
+							Alert.alert("Error", "Failed to remove student from backend.")
+						}
 					},
 				},
 			]
@@ -185,21 +247,27 @@ export default function StudentsScreen() {
 									</Text>
 								</View>
 							</TouchableOpacity>
-
-							{viewMode === "all" && (
+							{viewMode === "all" ? (
+								student.coaches.includes(coachId) ? (
+									<Text style={{ color: "#28a745", fontWeight: "600" }}>
+										✓ Already Added
+									</Text>
+								) : (
+									<TouchableOpacity
+										style={[styles.button, styles.addButton]}
+										onPress={() => handleAssignStudent(student)}
+									>
+										<Feather name="user-plus" size={16} color="#fff" />
+									</TouchableOpacity>
+								)
+							) : (
 								<TouchableOpacity
-									style={[styles.button, styles.addButton]}
-									onPress={addStudent}
+									style={[styles.button, styles.removeButton]}
+									onPress={() => removeStudent(student)}
 								>
-									<Feather name="user-plus" size={16} color="#fff" />
+									<Feather name="user-minus" size={16} color="#dc3545" />
 								</TouchableOpacity>
 							)}
-							<TouchableOpacity
-								style={[styles.button, styles.removeButton]}
-								onPress={() => removeStudent(student)}
-							>
-								<Feather name="user-minus" size={16} color="#dc3545" />
-							</TouchableOpacity>
 						</View>
 					))}
 				</ScrollView>
