@@ -51,8 +51,10 @@ export default function RecordVideoScreen() {
 
 	const handleVideoUpload = async (
 		videoUri: string,
-		uploadedBy: string,
+		uploadedBy: string, // student email
+		assignedCoachId: string,
 		filename: string,
+		durationSeconds: number,
 		onSuccess: () => void,
 		onFailure: () => void
 	) => {
@@ -70,9 +72,12 @@ export default function RecordVideoScreen() {
 						videoData: base64,
 						filename,
 						uploadedBy,
+						assignedCoachId,
+						durationSeconds,
 					}),
 				}
 			)
+
 			const resText = await response.text()
 
 			console.log("Status:", response.status)
@@ -80,7 +85,6 @@ export default function RecordVideoScreen() {
 
 			if (!response.ok) throw new Error("Upload failed")
 
-			// Optionally parse:
 			try {
 				const result = JSON.parse(resText)
 				console.log("✅ Upload success:", result)
@@ -520,15 +524,18 @@ export default function RecordVideoScreen() {
 									console.log("URI:", recordedVideoUri)
 									console.log("Duration (approx):", recordingTime, "seconds")
 
-									const coachName = userEmail || "unknown@user.com"
+									const studentEmail = userEmail || "unknown@user.com"
+									const coachId = "gautamgambhir@gmail.com" // 🔧 Replace this with actual logic (from Redux or route)
 									const filename = `video_${Date.now()}.mp4`
 
 									handleVideoUpload(
 										recordedVideoUri,
-										coachName,
+										studentEmail,
+										coachId,
 										filename,
-										() => setShowPreview(false), // only inside success callback
-										() => {} // handle error (optional toast/snackbar)
+										recordingTime,
+										() => setShowPreview(false),
+										() => {}
 									)
 								}
 							}}
