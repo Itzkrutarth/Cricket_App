@@ -12,8 +12,10 @@ import { useRouter } from "expo-router"
 import { styles } from "../../styles/AllVideosStyles"
 import { Ionicons } from "@expo/vector-icons"
 import Header from "./Header_1"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { ResizeMode, Video } from "expo-av"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { RootState } from "@/store/store"
+import { useSelector } from "react-redux"
 
 const numColumns = 2
 const screenWidth = Dimensions.get("window").width
@@ -39,6 +41,7 @@ const AllVideosScreen = () => {
 	const router = useRouter()
 	const [videoData, setVideoData] = useState<any[]>([])
 	const [loading, setLoading] = useState(true)
+	const userEmail = useSelector((state: RootState) => state.user.email)
 
 	const [favorites, setFavorites] = useState<string[]>([])
 	const animations = useRef<{ [key: string]: Animated.Value }>({}).current
@@ -49,10 +52,9 @@ const AllVideosScreen = () => {
 				const storedFavorites = await AsyncStorage.getItem("favorites")
 				if (storedFavorites) setFavorites(JSON.parse(storedFavorites))
 
-				const email = await AsyncStorage.getItem("@userEmail")
-				console.log("📧 Current Coach Email:", email)
-				if (email) {
-					const videos = await fetchVideosByCoach(email)
+				console.log("📧 Current Coach Email:", userEmail)
+				if (userEmail) {
+					const videos = await fetchVideosByCoach(userEmail)
 					setVideoData(videos)
 				}
 			} catch (err) {
@@ -93,8 +95,8 @@ const AllVideosScreen = () => {
 		router.push({
 			pathname: "/coach-home/VideoPlayerScreen",
 			params: {
-				videoSource: video.videoUrl,
-				title: video.title || "Untitled Video",
+				videoSource: video.sasUrl,
+				title: video.id || "Untitled Video",
 				id: video.id,
 			},
 		})
@@ -114,7 +116,7 @@ const AllVideosScreen = () => {
 						<View style={[styles.item, { width: itemSize }]}>
 							<TouchableOpacity onPress={() => handleVideoPress(item)}>
 								<Video
-									source={{ uri: item.videoUrl }}
+									source={{ uri: item.sasUrl }}
 									style={styles.thumbnail}
 									resizeMode={ResizeMode.CONTAIN}
 									shouldPlay={false}
@@ -122,7 +124,18 @@ const AllVideosScreen = () => {
 									isMuted={true}
 								/>
 							</TouchableOpacity>
-							<Text style={styles.videoTitle}>{item.title}</Text>
+							<Text style={styles.videoTitle}>
+								{item.id || "Untitled Video"}
+							</Text>
+							<Text
+								style={{
+									color: item.feedbackStatus === "pending" ? "orange" : "green",
+									fontSize: 12,
+									textAlign: "center",
+								}}
+							>
+								{item.feedbackStatus === "pending" ? "Pending" : "Reviewed"}
+							</Text>
 							<TouchableOpacity
 								onPress={() => toggleFavorite(item.id)}
 								style={{ alignSelf: "center", marginTop: 5 }}

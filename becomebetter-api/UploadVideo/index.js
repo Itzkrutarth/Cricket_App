@@ -6,17 +6,27 @@ const AZURE_STORAGE_CONNECTION_STRING =
 const COSMOS_CONNECTION_STRING = process.env.COSMOS_CONNECTION_STRING
 
 module.exports = async function (context, req) {
-	const { videoData, filename, uploadedBy } = req.body
+	const { videoData, filename, uploadedBy, assignedCoachId, durationSeconds } =
+		req.body
 
-	if (!videoData || !filename || !uploadedBy) {
-		context.res = { status: 400, body: "Missing required fields" }
+	if (
+		!videoData ||
+		!filename ||
+		!uploadedBy ||
+		!assignedCoachId ||
+		!durationSeconds
+	) {
+		context.res = {
+			status: 400,
+			body: "Missing required fields (videoData, filename, uploadedBy, assignedCoachId, durationSeconds)",
+		}
 		return
 	}
 
 	try {
 		const buffer = Buffer.from(videoData, "base64")
 
-		// Upload to Azure Blob
+		// Upload video to Azure Blob Storage
 		const blobServiceClient = BlobServiceClient.fromConnectionString(
 			AZURE_STORAGE_CONNECTION_STRING
 		)
@@ -34,16 +44,29 @@ module.exports = async function (context, req) {
 		const db = cosmosClient.database("becomebetter")
 		const container = db.container("videos")
 
-		await container.items.create({
+		const newItem = {
 			id: filename,
-			uploadedBy,
 			videoUrl,
+			uploadedBy, // student
+			ownerId: uploadedBy, // partition key
+			assignedCoachId,
+			visibleTo: [assignedCoachId],
+			type: "original",
+			linkedVideoId: null,
+			isPrivate: true,
+			durationSeconds,
+			feedbackStatus: "pending",
 			uploadedAt: new Date().toISOString(),
-		})
+		}
+
+		await container.items.create(newItem)
 
 		context.res = {
 			status: 200,
-			body: { message: "Video uploaded successfully", videoUrl },
+			body: {
+				message: "Video uploaded and saved successfully",
+				videoUrl,
+			},
 		}
 	} catch (error) {
 		context.log.error(error)
