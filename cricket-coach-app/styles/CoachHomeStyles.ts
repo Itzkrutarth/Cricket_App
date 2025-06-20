@@ -253,14 +253,14 @@ export const styles = StyleSheet.create({
   },
 
   // Videos styles
-  
-  videoCoach:{
-marginTop: 16,
+
+  videoCoach: {
+    marginTop: 16,
     marginBottom: 32,
     width: 180,
     marginLeft: 16,
   },
-  
+
   videosContainer: {
     marginTop: 16,
     marginBottom: 32,
@@ -399,51 +399,70 @@ marginTop: 16,
     marginLeft: 8,
   },
   // Add these to your CoachHomeStyles.ts
-formGroup: {
-  marginBottom: 15,
-},
-formLabel: {
-  fontSize: 14,
-  color: '#555',
-  marginBottom: 5,
-  fontWeight: '500',
-},
-formInput: {
-  borderWidth: 1,
-  borderColor: '#ddd',
-  borderRadius: 6,
-  padding: 10,
-  fontSize: 16,
-},
-typeSelector: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  marginVertical: 5,
-},
-typeButton: {
-  paddingVertical: 8,
-  paddingHorizontal: 12,
-  borderRadius: 20,
-  marginRight: 8,
-  marginBottom: 8,
-},
-selectedTypeButton: {
-  borderWidth: 2,
-  borderColor: '#fff',
-},
-typeButtonText: {
-  color: '#fff',
-  fontSize: 14,
-},
-deleteButton: {
-  backgroundColor: '#e74a3b',
-},
-saveButton: {
-  backgroundColor: '#4e73df', 
-},
-eventForm: {
-  padding: 15,
-  // flex: 1,  
-},
-
+  formGroup: {
+    marginBottom: 15,
+  },
+  formLabel: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 5,
+    fontWeight: "500",
+  },
+  formInput: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 6,
+    padding: 10,
+    fontSize: 16,
+  },
+  typeSelector: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginVertical: 5,
+  },
+  typeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  selectedTypeButton: {
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  typeButtonText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+  deleteButton: {
+    backgroundColor: "#e74a3b",
+  },
+  saveButton: {
+    backgroundColor: "#4e73df",
+  },
+  eventForm: {
+    padding: 15,
+    // flex: 1,
+  },
+  taskItem: {
+    backgroundColor: "#f1f5f9",
+    padding: 12,
+    marginVertical: 6,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#4e73df",
+  },
+  taskItemCompleted: {
+    backgroundColor: "#e2e8f0",
+    padding: 12,
+    marginVertical: 6,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#10b981",
+  },
+  taskText: {
+    fontSize: 16,
+    color: "#333",
+  },
 });

@@ -1,8 +1,7 @@
 import { StyleSheet, Dimensions } from "react-native";
 
 const { width } = Dimensions.get("window");
-const PROFILE_SIZE = 120;
-const SHOT_SIZE = (width - 60) / 2; // 2 images per row with 20px gap
+const SHOT_SIZE = (width - 60) / 2;
 
 export const styles = StyleSheet.create({
   container: {
@@ -10,84 +9,107 @@ export const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   scrollContent: {
-    padding: 20,
+    padding: 16,
   },
 
-  // Profile Section
+  // Card wrapper
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+
+  // Profile Image + Name
   profileImage: {
-    width: PROFILE_SIZE,
-    height: PROFILE_SIZE,
-    borderRadius: PROFILE_SIZE / 2,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     alignSelf: "center",
-    marginTop: 10,
+    marginBottom: 10,
   },
   name: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: "#111",
     textAlign: "center",
-    marginTop: 12,
   },
-  subTitle: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    marginTop: 4,
-  },
+
+  // Info section
   role: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2563EB",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  experience: {
     fontSize: 14,
     color: "#555",
     textAlign: "center",
-    marginTop: 2,
+    marginBottom: 8,
   },
   contact: {
     fontSize: 14,
-    color: "#555",
+    color: "#444",
     textAlign: "center",
-    marginTop: 2,
+    marginBottom: 2,
   },
 
-  // Section titles
+  // Section title
   sectionTitle: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
     color: "#1D4ED8",
-    marginTop: 20,
-    marginBottom: 8,
+    marginBottom: 10,
   },
 
-  // Sample Shots Grid
-  shotsContainer: {
-    marginTop: 12,
-  },
-  shotRow: {
+  // Performance metrics
+  performanceMetrics: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
+    justifyContent: "space-around",
+    marginTop: 8,
   },
-  shotImage: {
-    width: SHOT_SIZE,
-    height: SHOT_SIZE,
-    borderRadius: 8,
-    backgroundColor: "#ddd",
+  metricItem: {
+    alignItems: "center",
+  },
+  metricLabel: {
+    fontSize: 13,
+    color: "#888",
+    marginBottom: 4,
+  },
+  metricValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#111",
   },
 
-  // Recent Videos Grid
+  // Recent Videos
   videoGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    marginTop: 10,
   },
   videoThumbnail: {
     width: SHOT_SIZE,
     aspectRatio: 1,
-    borderRadius: 8,
-    backgroundColor: "#ddd",
-    marginBottom: 12,
+    borderRadius: 10,
+    backgroundColor: "#eee",
+  },
+  videoTitle: {
+    textAlign: "center",
+    marginTop: 4,
+    fontWeight: "500",
+    fontSize: 13,
+    color: "#333",
   },
 
-  // Actions (Saved, Annotated Buttons)
+  // Actions
   actionsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -110,19 +132,18 @@ export const styles = StyleSheet.create({
   },
   actionText: {
     color: "#fff",
-    fontSize: 14,
     fontWeight: "600",
     marginLeft: 6,
   },
 
   // Record Video Button
   recordButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#2563EB",
-    borderRadius: 8,
     marginTop: 20,
     paddingVertical: 14,
+    backgroundColor: "#2563EB",
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
   },
   recordButtonText: {
@@ -131,26 +152,4 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 8,
   },
-
-  // Empty placeholder (if needed for future expansion)
-  placeholderGrid: {
-    marginTop: 20,
-    marginHorizontal: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-  },
-  placeholderText: {
-    color: "#9CA3AF",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  videoTitle: {
-  fontSize: 14,
-  color: "#333",
-  fontWeight: "500",
-  marginTop: 4,
-  textAlign: "center",
-},
 });

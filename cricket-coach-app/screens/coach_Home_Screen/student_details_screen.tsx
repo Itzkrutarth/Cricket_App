@@ -1,3 +1,4 @@
+// StudentDetail.tsx
 import React from "react";
 import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -5,29 +6,19 @@ import { Entypo, Feather } from "@expo/vector-icons";
 import Header from "./Header_1";
 import { styles } from "../../styles/student_details";
 
-type Params = {
-  id: string;
-  name: string;
-  photoUrl: string;
-  role?: string;
-  email?: string;
-  phoneNumber?: string;
-  viewMode?: "my" | "all";
-};
-
 export default function StudentDetail() {
   const router = useRouter();
   const {
     id,
     name,
     photoUrl,
-    role = "Batsman",
+    role1 = "Batsman",
     email,
     phoneNumber,
+    experience1 = "Aggressive right-handed batsman with excellent technique.",
     viewMode = "my",
-  } = useLocalSearchParams<Params>();
+  } = useLocalSearchParams();
 
-  // Local video paths with titles
   const recentVideos = [
     {
       id: "1",
@@ -43,19 +34,53 @@ export default function StudentDetail() {
     },
   ];
 
+  const performance = {
+    batting: 82,
+    bowling: 15,
+    fielding: 78,
+  };
+
   return (
     <View style={styles.container}>
       <Header title="Student" />
-      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Profile Info */}
-        <Image source={{ uri: photoUrl }} style={styles.profileImage} />
-        <Text style={styles.name}>{name}</Text>
-        <Text style={styles.role}>{role}</Text>
+      <ScrollView
+        style={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Card */}
+        <View style={styles.card}>
+          <Image source={{ uri: photoUrl }} style={styles.profileImage} />
+          <Text style={styles.name}>{name}</Text>
+          <Text style={styles.role}>{role1}</Text>
+          {email && <Text style={styles.contact}>📧 {email}</Text>}
+          {phoneNumber && <Text style={styles.contact}>📞 {phoneNumber}</Text>}
+        </View>
 
-        {email && <Text style={styles.contact}>📧 {email}</Text>}
-        {phoneNumber && <Text style={styles.contact}>📞 {phoneNumber}</Text>}
+        {/* Personal Info Card */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Professional Summary</Text>
+          <Text style={styles.experience}>{experience1}</Text>
+        </View>
 
-        {/* Display video thumbnails with titles */}
+        {/* Performance Card */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Performance Metrics</Text>
+          <View style={styles.performanceMetrics}>
+            <View style={styles.metricItem}>
+              <Text style={styles.metricLabel}>Batting</Text>
+              <Text style={styles.metricValue}>{performance.batting}%</Text>
+            </View>
+            <View style={styles.metricItem}>
+              <Text style={styles.metricLabel}>Bowling</Text>
+              <Text style={styles.metricValue}>{performance.bowling}%</Text>
+            </View>
+            <View style={styles.metricItem}>
+              <Text style={styles.metricLabel}>Fielding</Text>
+              <Text style={styles.metricValue}>{performance.fielding}%</Text>
+            </View>
+          </View>
+        </View>
+
         {viewMode === "my" && (
           <>
             <Text style={styles.sectionTitle}>Recent Videos</Text>
@@ -84,11 +109,13 @@ export default function StudentDetail() {
               ))}
             </View>
 
-            {/* Action Buttons */}
+            {/* Saved/Annotated Video Buttons */}
             <View style={styles.actionsContainer}>
               <TouchableOpacity
                 style={[styles.actionButton, styles.savedButton]}
-                onPress={() => router.push(`/coach-home/SavedVideo?studentId=${id}`)}
+                onPress={() =>
+                  router.push(`/coach-home/SavedVideo?studentId=${id}`)
+                }
               >
                 <Feather name="video" size={16} color="#fff" />
                 <Text style={styles.actionText}>Saved Videos</Text>
@@ -96,7 +123,9 @@ export default function StudentDetail() {
 
               <TouchableOpacity
                 style={[styles.actionButton, styles.annotatedButton]}
-                onPress={() => router.push(`/coach-home/AnnotatedVideos?studentId=${id}`)}
+                onPress={() =>
+                  router.push(`/coach-home/AnnotatedVideos?studentId=${id}`)
+                }
               >
                 <Feather name="edit-3" size={16} color="#fff" />
                 <Text style={styles.actionText}>Annotated Videos</Text>
