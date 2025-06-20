@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback } from "react";
 import {
 	View,
 	Text,
@@ -7,118 +7,120 @@ import {
 	TouchableOpacity,
 	ScrollView,
 	Alert,
-} from "react-native"
-import { Feather } from "@expo/vector-icons"
-import { useRouter, useLocalSearchParams } from "expo-router"
-import { useFocusEffect } from "@react-navigation/native"
-import Header from "./Header_1"
-import { styles } from "../../styles/StudentsStyles"
-import { useSelector } from "react-redux"
-import { RootState } from "@/store/store"
+	ActivityIndicator,
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
+import Header from "./Header_1";
+import { styles } from "../../styles/StudentsStyles";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 type Student = {
-	username: string
-	id: string
-	name: string
-	photoUrl: string
-	email?: string
-	phoneNumber?: string
-	address?: string
-	role?: string
-	experience?: string
-	birthDate?: Date
-	gender?: string
-	coaches: string[] // ✅ required for relationship filtering
-}
+	username: string;
+	id: string;
+	name: string;
+	photoUrl: string;
+	email?: string;
+	phoneNumber?: string;
+	address?: string;
+	role?: string;
+	experience?: string;
+	birthDate?: Date;
+	gender?: string;
+	coaches: string[];
+};
+
 export default function StudentsScreen() {
-	const [loading, setLoading] = useState(true)
-	const [students, setStudents] = useState<Student[]>([])
-	const [searchQuery, setSearchQuery] = useState("")
-	const router = useRouter()
-	const params = useLocalSearchParams()
-	const viewMode = params.viewMode || "my"
-	const DEFAULT_PROFILE_PIC =
-		"https://cdn-icons-png.flaticon.com/512/149/149071.png"
-	const coachId = useSelector((state: RootState) => state.user.id)
+	const [loading, setLoading] = useState(true);
+	const [students, setStudents] = useState<Student[]>([]);
+	const [searchQuery, setSearchQuery] = useState("");
+	const [assigningId, setAssigningId] = useState<string | null>(null);
+	const router = useRouter();
+	const params = useLocalSearchParams();
+	const viewMode = params.viewMode || "my";
+	const DEFAULT_PROFILE_PIC = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+	const coachId = useSelector((state: RootState) => state.user.id);
+
+	const fetchStudents = async () => {
+		setLoading(true);
+		try {
+			const response = await fetch(
+				"https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Player"
+			);
+			const data = await response.json();
+
+			const formatted: Student[] = data.map((user: any) => {
+				const name = user.name?.trim();
+				return {
+					id: user.id,
+					name: name || "Unnamed Player",
+					username: user.username,
+					email: user.email || "",
+					phoneNumber: user.phoneNumber || "",
+					address: user.address || "",
+					role: user.role || "",
+					experience: user.experience || "",
+					birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
+					gender: user.gender || "",
+					photoUrl: user.profilePictureUrl || DEFAULT_PROFILE_PIC,
+					coaches: user.coaches || [],
+				};
+			});
+
+			const filtered =
+				viewMode === "my"
+					? formatted.filter((s) => s.coaches?.includes(coachId))
+					: formatted;
+
+			setStudents(filtered);
+			router.setParams({ studentCount: filtered.length.toString() });
+		} catch (err) {
+			console.error("❌ Failed to load students", err);
+		}
+		setLoading(false);
+	};
 
 	useEffect(() => {
-		const fetchStudents = async () => {
-			try {
-				const response = await fetch(
-					"https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Player"
-				)
-				const data = await response.json()
-
-				const formatted: Student[] = data.map((user: any) => {
-					const name = user.name.trim()
-					return {
-						id: user.id,
-						name: name || "Unnamed Player",
-						username: user.username,
-						email: user.email || "",
-						phoneNumber: user.phoneNumber || "",
-						address: user.address || "",
-						role: user.role || "",
-						experience: user.experience || "",
-						birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
-						gender: user.gender || "",
-						photoUrl: user.profilePictureUrl || DEFAULT_PROFILE_PIC,
-						coaches: user.coaches || [], // ✅ Add this
-					}
-				})
-
-				const filtered =
-					viewMode === "my"
-						? formatted.filter((s) => s.coaches?.includes(coachId))
-						: formatted
-
-				setStudents(filtered)
-				router.setParams({ studentCount: filtered.length.toString() })
-				setLoading(false)
-			} catch (err) {
-				console.error("❌ Failed to load students", err)
-				setLoading(false)
-			}
-		}
-
-		fetchStudents()
-	}, [])
+		fetchStudents();
+	}, []);
 
 	useFocusEffect(
 		useCallback(() => {
-			// Refresh logic if needed
+			fetchStudents(); // Refresh when screen is focused
 		}, [])
-	)
+	);
+
 	const handleAssignStudent = async (student: Student) => {
+		setAssigningId(student.id);
 		try {
-			const updatedCoaches = [...(student.coaches || []), coachId]
+			const updatedCoaches = Array.from(new Set([...(student.coaches || []), coachId]));
 
 			await fetch(`https://becomebetter-api.azurewebsites.net/api/UpdateUser`, {
 				method: "PUT",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					id: student.id,
-					coaches: updatedCoaches,
-				}),
-			})
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ id: student.id, coaches: updatedCoaches }),
+			});
 
-			Alert.alert("Success", `${student.name} has been added to your students.`)
-			setStudents((prev) =>
-				prev.map((s) =>
-					s.id === student.id ? { ...s, coaches: updatedCoaches } : s
-				)
-			)
+			await fetch(
+				`https://becomebetter-api.azurewebsites.net/api/AddStudentToCoach?code=${process.env.EXPO_PUBLIC_ADD_STUDENT_KEY}`,
+				{
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ coachId, studentId: student.id }),
+				}
+			);
+
+			Alert.alert("Success", `${student.name} has been added to your students.`);
+			await fetchStudents(); // Refresh list
 		} catch (error) {
-			console.error("Failed to assign student:", error)
-			Alert.alert("Error", "Something went wrong while assigning student.")
+			console.error("Failed to assign student:", error);
+			Alert.alert("Error", "Something went wrong while assigning student.");
+		} finally {
+			setAssigningId(null);
 		}
-	}
-
-	const addStudent = () => {
-		router.push("/coach-home/add_student")
-	}
+	};
 
 	const removeStudent = (student: Student) => {
 		Alert.alert(
@@ -131,39 +133,34 @@ export default function StudentsScreen() {
 					style: "destructive",
 					onPress: async () => {
 						try {
-							// 👇 Filter out the coach from the student's coaches list
-							const updatedCoaches = student.coaches.filter(
-								(id) => id !== coachId
-							)
+							const updatedCoaches = student.coaches.filter((id) => id !== coachId);
 
-							// 👇 Call backend to update the student document
+							await fetch(`https://becomebetter-api.azurewebsites.net/api/UpdateUser`, {
+								method: "PUT",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({ id: student.id, coaches: updatedCoaches }),
+							});
+
 							await fetch(
-								`https://becomebetter-api.azurewebsites.net/api/UpdateUser`,
+								`https://becomebetter-api.azurewebsites.net/api/RemoveStudentFromCoach?code=${process.env.EXPO_PUBLIC_REMOVE_STUDENT_KEY}`,
 								{
 									method: "PUT",
-									headers: {
-										"Content-Type": "application/json",
-									},
-									body: JSON.stringify({
-										id: student.id,
-										coaches: updatedCoaches,
-									}),
+									headers: { "Content-Type": "application/json" },
+									body: JSON.stringify({ coachId, studentId: student.id }),
 								}
-							)
+							);
 
-							// 👇 Update local UI
-							setStudents((curr) => curr.filter((s) => s.id !== student.id))
-
-							Alert.alert("Removed", `${student.name} has been removed.`)
+							setStudents((curr) => curr.filter((s) => s.id !== student.id));
+							Alert.alert("Removed", `${student.name} has been removed.`);
 						} catch (err) {
-							console.error("❌ Failed to remove student:", err)
-							Alert.alert("Error", "Failed to remove student from backend.")
+							console.error("❌ Failed to remove student:", err);
+							Alert.alert("Error", "Failed to remove student from backend.");
 						}
 					},
 				},
 			]
-		)
-	}
+		);
+	};
 
 	const openDetails = (student: Student) => {
 		router.push({
@@ -179,20 +176,21 @@ export default function StudentsScreen() {
 				experience: student.experience || "",
 				birthDate: student.birthDate?.toISOString() || "",
 				gender: student.gender || "",
-				viewMode, // Pass the viewMode parameter
+				viewMode,
 			},
-		})
-	}
+		});
+	};
 
 	const filteredStudents = students.filter((student) =>
 		student.name.toLowerCase().includes(searchQuery.toLowerCase())
-	)
+	);
+
+	const addStudent = () => router.push("/coach-home/add_student");
 
 	return (
 		<View style={styles.container}>
 			<Header title="Students" />
 
-			{/* Search Bar */}
 			<View style={styles.searchContainer}>
 				<Feather name="search" size={18} color="#666" />
 				<TextInput
@@ -204,11 +202,8 @@ export default function StudentsScreen() {
 				/>
 			</View>
 
-			{/* If no matches */}
 			{loading ? (
-				<Text style={{ textAlign: "center", marginTop: 20 }}>
-					Loading students...
-				</Text>
+				<Text style={{ textAlign: "center", marginTop: 20 }}>Loading students...</Text>
 			) : filteredStudents.length === 0 ? (
 				<View style={styles.emptyState}>
 					<Feather name="users" size={64} color="#ccc" />
@@ -220,9 +215,7 @@ export default function StudentsScreen() {
 							onPress={addStudent}
 						>
 							<Feather name="user-plus" size={20} color="#fff" />
-							<Text style={[styles.buttonText, styles.addButtonText]}>
-								Add New Student
-							</Text>
+							<Text style={[styles.buttonText, styles.addButtonText]}>Add New Student</Text>
 						</TouchableOpacity>
 					)}
 				</View>
@@ -234,10 +227,7 @@ export default function StudentsScreen() {
 								style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
 								onPress={() => openDetails(student)}
 							>
-								<Image
-									source={{ uri: student.photoUrl }}
-									style={styles.image}
-								/>
+								<Image source={{ uri: student.photoUrl }} style={styles.image} />
 								<View style={{ marginLeft: 12 }}>
 									<Text style={{ fontWeight: "bold", fontSize: 16 }}>
 										{student.name || "Unnamed Player"}
@@ -247,6 +237,7 @@ export default function StudentsScreen() {
 									</Text>
 								</View>
 							</TouchableOpacity>
+
 							{viewMode === "all" ? (
 								student.coaches.includes(coachId) ? (
 									<Text style={{ color: "#28a745", fontWeight: "600" }}>
@@ -256,8 +247,13 @@ export default function StudentsScreen() {
 									<TouchableOpacity
 										style={[styles.button, styles.addButton]}
 										onPress={() => handleAssignStudent(student)}
+										disabled={assigningId === student.id}
 									>
-										<Feather name="user-plus" size={16} color="#fff" />
+										{assigningId === student.id ? (
+											<ActivityIndicator color="#fff" size="small" />
+										) : (
+											<Feather name="user-plus" size={16} color="#fff" />
+										)}
 									</TouchableOpacity>
 								)
 							) : (
@@ -273,5 +269,5 @@ export default function StudentsScreen() {
 				</ScrollView>
 			)}
 		</View>
-	)
+	);
 }
