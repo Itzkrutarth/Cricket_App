@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet } from "react-native"
 
 export const styles = StyleSheet.create({
   container: {
@@ -32,6 +32,9 @@ export const styles = StyleSheet.create({
     color: "#1D4ED8",
     marginLeft: 4,
   },
+  scrollContent: {
+    paddingBottom: 40, // 👈 Important for scrollable content
+  },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -54,4 +57,4 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: "#DC2626",
   },
-});
+})
