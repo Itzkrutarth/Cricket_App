@@ -1,23 +1,28 @@
 import { AntDesign } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import React, { useState } from "react"
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native"
+import {
+	Alert,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	View,
+	ActivityIndicator,
+} from "react-native"
 import { validateSignIn } from "../js/siginValidation"
 import { styles } from "../styles/SignInStyles"
-import { ActivityIndicator } from "react-native"
-
 import { useDispatch } from "react-redux"
 import { setUser } from "@/store/userSlice"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 export default function SignInScreen() {
 	const router = useRouter()
+	const dispatch = useDispatch()
 
 	const [email, setEmail] = useState("")
 	const [password, setPassword] = useState("")
 	const [error, setError] = useState("")
 	const [loading, setLoading] = useState(false)
-
-	const dispatch = useDispatch()
 
 	const handleLogin = async () => {
 		const validationError = validateSignIn(email.trim(), password.trim())
@@ -47,28 +52,37 @@ export default function SignInScreen() {
 			if (response.ok) {
 				const { token, name, role, id, profilePic } = result
 
+				// Capitalize first letter of role
+				const normalizedRole =
+					role?.charAt(0).toUpperCase() + role?.slice(1).toLowerCase()
+
+				// Save to Redux
 				dispatch(
 					setUser({
-						name: result.name,
+						name,
 						email: result.email || email,
-						id: result.id,
-						role: result.role,
-						token: result.token,
-						profilePicture: result.profilePic || "",
-						// Optionally add other fields here if your API returns them
-						// gender: result.gender,
-						// birthDate: result.birthDate,
+						id,
+						role: normalizedRole,
+						token,
+						profilePicture: profilePic || "",
 					})
 				)
 
+				// Save to AsyncStorage
+				await AsyncStorage.setItem("@token", token)
+				await AsyncStorage.setItem("@userName", name)
+				await AsyncStorage.setItem("@role", normalizedRole)
+				await AsyncStorage.setItem("@profilePicture", profilePic || "")
+
 				Alert.alert("✅ Login Success", `Welcome, ${name}!`)
 
-				if (role === "Coach") {
+				// Navigate based on role
+				if (normalizedRole === "Coach") {
 					router.replace("/coachhome")
-				} else if (role === "Player") {
+				} else if (normalizedRole === "Player") {
 					router.replace("/studenthome")
 				} else {
-					Alert.alert("⚠️ Unknown Role", `Unhandled role: ${role}`)
+					Alert.alert("⚠️ Unknown Role", `Unhandled role: ${normalizedRole}`)
 				}
 			} else {
 				Alert.alert("❌ Login Failed", result.message || "Invalid credentials")
@@ -87,6 +101,7 @@ export default function SignInScreen() {
 
 			<View style={styles.card}>
 				<Text style={styles.title}>Login Account</Text>
+
 				<TextInput
 					style={styles.input}
 					placeholder="Email Address"
@@ -94,6 +109,7 @@ export default function SignInScreen() {
 					value={email}
 					onChangeText={setEmail}
 				/>
+
 				<TextInput
 					style={styles.input}
 					placeholder="Password"
@@ -112,7 +128,6 @@ export default function SignInScreen() {
 				)}
 
 				<View style={styles.rightAlignRow}>
-					{/* <Text style={styles.rememberText}>Save Password</Text> */}
 					<TouchableOpacity onPress={() => router.push("/forgotpassword")}>
 						<Text style={styles.linkText}>Forgot Password</Text>
 					</TouchableOpacity>
@@ -125,6 +140,7 @@ export default function SignInScreen() {
 				) : null}
 
 				<Text style={styles.orText}>Or</Text>
+
 				<View style={styles.socialRow}>
 					<TouchableOpacity
 						style={styles.socialButton}
