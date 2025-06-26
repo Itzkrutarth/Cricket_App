@@ -16,6 +16,8 @@ import {
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { styles } from "../../styles/CoachHomeStyles";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Video as ExpoVideo, ResizeMode } from "expo-av";
 
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -218,6 +220,21 @@ const getEventColor = (type: Event["type"]) => {
   }
 };
 
+// Fetch videos by coach (reuse logic from AllVideosScreen)
+const fetchVideosByCoach = async (email: string) => {
+  try {
+    const response = await fetch(
+      `https://becomebetter-api.azurewebsites.net/api/GetVideosByCoach?coachEmail=${encodeURIComponent(email)}`
+    );
+    if (!response.ok) throw new Error("Failed to fetch videos");
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("❌ Error fetching videos:", error);
+    return [];
+  }
+};
+
 // --------- Main Component
 const HomeContent = () => {
   const params = useLocalSearchParams();
@@ -230,7 +247,7 @@ const HomeContent = () => {
   const [joinRequests, setJoinRequests] =
     useState<Student[]>(dummyJoinRequests);
   const [events, setEvents] = useState<Event[]>(dummyEvents);
-  const [videos, setVideos] = useState<Video[]>(dummyVideos);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -306,11 +323,26 @@ const HomeContent = () => {
   useEffect(() => {
     const loadInitialStats = async () => {
       await fetchRealStudentCount(); // total from API
+
+      // Fetch videos dynamically for this coach
+      if (user.email) {
+        const apiVideos = await fetchVideosByCoach(user.email);
+        // Map fields if needed
+        const mappedVideos = apiVideos.map((v) => ({
+          id: v.id || v.videoId, // adjust according to your API
+          title: v.title || v.VideoTitle || "Untitled Video",
+          thumbnail: v.thumbnail || v.ThumbnailUrl || "",
+          sasUrl: v.sasUrl || v.VideoUrl || "",
+          // ...add other fields as needed
+        }));
+        setVideos(mappedVideos);
+      }
+
       calculateStats(); // rest from dummy/local data
       setLoading(false);
     };
     loadInitialStats();
-  }, [calculateStats]);
+  }, [calculateStats, user.email]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -691,20 +723,36 @@ const HomeContent = () => {
             <TouchableOpacity
               key={video.id}
               style={styles.videoCard}
-              onPress={handleVideos}
+              onPress={() =>
+                router.push({
+                  pathname: "/coach-home/VideoPlayerScreen",
+                  params: {
+                    videoSource: video.sasUrl,
+                    title: video.title || "Untitled Video",
+                    id: video.id,
+                  },
+                })
+              }
             >
-              <Image
-                source={{ uri: video.thumbnail }}
-                style={styles.videoThumbnail}
-              />
-              <View style={styles.videoDuration}>
-                <Text style={styles.videoDurationText}>{video.duration}</Text>
-              </View>
+              {video.thumbnail ? (
+                <Image
+                  source={{ uri: video.thumbnail }}
+                  style={styles.videoThumbnail}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.videoThumbnail,
+                    { backgroundColor: "#e0e0e0", justifyContent: "center", alignItems: "center" },
+                  ]}
+                >
+                  <Feather name="video" size={36} color="#aaa" />
+                  <Text style={{ color: "#aaa", marginTop: 4, fontSize: 12 }}>No Thumbnail</Text>
+                </View>
+              )}
               <Text style={styles.videoTitle} numberOfLines={2}>
                 {video.title}
-              </Text>
-              <Text style={styles.videoCategory}>
-                {video.category.toUpperCase()}
               </Text>
             </TouchableOpacity>
           ))}

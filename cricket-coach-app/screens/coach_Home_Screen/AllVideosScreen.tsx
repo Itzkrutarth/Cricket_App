@@ -6,6 +6,7 @@ import {
 	Dimensions,
 	TouchableOpacity,
 	Animated,
+	Alert,
 } from "react-native"
 
 import { useRouter } from "expo-router"
@@ -34,6 +35,22 @@ const fetchVideosByCoach = async (email: string) => {
 	} catch (error) {
 		console.error("❌ Error fetching videos:", error)
 		return []
+	}
+}
+
+const deleteVideoById = async (videoId: string) => {
+	try {
+		const response = await fetch(
+			`https://becomebetter-api.azurewebsites.net/api/DeleteVideoById?videoId=${encodeURIComponent(
+				videoId
+			)}`,
+			{ method: "DELETE" }
+		)
+		if (!response.ok) throw new Error("Failed to delete video")
+		return true
+	} catch (error) {
+		console.error("❌ Error deleting video:", error)
+		return false
 	}
 }
 
@@ -106,7 +123,7 @@ const AllVideosScreen = () => {
 		<View style={styles.container}>
 			<Header title="All Videos" />
 			<FlatList
-				data={videoData || []} // ✅ avoid undefined
+				data={videoData || []}
 				keyExtractor={(item) => item.id}
 				numColumns={numColumns}
 				renderItem={({ item }) => {
@@ -114,16 +131,55 @@ const AllVideosScreen = () => {
 					if (!animations[item.id]) animations[item.id] = new Animated.Value(1)
 					return (
 						<View style={[styles.item, { width: itemSize }]}>
-							<TouchableOpacity onPress={() => handleVideoPress(item)}>
-								<Video
-									source={{ uri: item.sasUrl }}
-									style={styles.thumbnail}
-									resizeMode={ResizeMode.CONTAIN}
-									shouldPlay={false}
-									isLooping={false}
-									isMuted={true}
-								/>
-							</TouchableOpacity>
+							<View>
+								<TouchableOpacity onPress={() => handleVideoPress(item)}>
+									<Video
+										source={{ uri: item.sasUrl }}
+										style={styles.thumbnail}
+										resizeMode={ResizeMode.CONTAIN}
+										shouldPlay={false}
+										isLooping={false}
+										isMuted={true}
+									/>
+								</TouchableOpacity>
+								{/* Delete Icon */}
+								<TouchableOpacity
+									style={{
+										position: "absolute",
+										top: 8,
+										right: 8,
+										zIndex: 2,
+										backgroundColor: "rgba(255,255,255,0.8)",
+										borderRadius: 16,
+										padding: 2,
+									}}
+									onPress={() => {
+										Alert.alert(
+											"Delete Video",
+											"Are you sure you want to delete this video?",
+											[
+												{ text: "Cancel", style: "cancel" },
+												{
+													text: "Delete",
+													style: "destructive",
+													onPress: async () => {
+														const success = await deleteVideoById(item.id)
+														if (success) {
+															setVideoData((prev) =>
+																prev.filter((v) => v.id !== item.id)
+															)
+														} else {
+															Alert.alert("Error", "Failed to delete video.")
+														}
+													},
+												},
+											]
+										)
+									}}
+								>
+									<Ionicons name="trash" size={20} color="red" />
+								</TouchableOpacity>
+							</View>
 							<Text style={styles.videoTitle}>
 								{item.id || "Untitled Video"}
 							</Text>
