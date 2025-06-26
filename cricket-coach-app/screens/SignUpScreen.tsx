@@ -6,6 +6,9 @@ import * as ImageManipulator from "expo-image-manipulator"
 import * as ImagePicker from "expo-image-picker"
 import { useRouter } from "expo-router"
 import React, { useState } from "react"
+import { useDispatch } from "react-redux"
+import { setUser } from "@/store/userSlice"
+
 import {
 	ActivityIndicator,
 	Alert,
@@ -26,6 +29,8 @@ import { styles } from "../styles/SignUpStyles"
 import { Ionicons } from "@expo/vector-icons"
 
 export default function SignUpScreen() {
+	const dispatch = useDispatch()
+
 	const router = useRouter()
 	const [name, setName] = useState("")
 	const [username, setUsername] = useState("")
@@ -68,96 +73,6 @@ export default function SignUpScreen() {
 		setShowDatePicker(false)
 	}
 
-	// const handlePickImage = () => {
-	// 	Alert.alert("Select Option", "Choose an image source", [
-	// 		{
-	// 			text: "Camera",
-	// 			onPress: async () => {
-	// 				const permission = await ImagePicker.requestCameraPermissionsAsync()
-	// 				if (permission.granted) {
-	// 					const result = await ImagePicker.launchCameraAsync({
-	// 						mediaTypes: ImagePicker.MediaTypeOptions.Images,
-	// 						quality: 1,
-	// 					})
-	// 					if (!result.canceled) setImage(result.assets[0].uri)
-	// 				}
-	// 			},
-	// 		},
-	// 		{
-	// 			text: "Gallery",
-	// 			onPress: async () => {
-	// 				const permission =
-	// 					await ImagePicker.requestMediaLibraryPermissionsAsync()
-	// 				if (permission.granted) {
-	// 					const result = await ImagePicker.launchImageLibraryAsync({
-	// 						mediaTypes: ImagePicker.MediaTypeOptions.Images,
-	// 						quality: 1,
-	// 					})
-	// 					if (!result.canceled) setImage(result.assets[0].uri)
-	// 				}
-	// 			},
-	// 		},
-	// 		{ text: "Cancel", style: "cancel" },
-	// 	])
-	// }
-
-	// const handleSignup = async () => {
-	// 	const validationErrors = validateSignUp({
-	// 		name,
-	// 		username,
-	// 		email,
-	// 		birthDate,
-	// 		phoneNumber,
-	// 		role,
-	// 		password,
-	// 		gender,
-	// 		confirmPassword,
-	// 	})
-
-	// 	if (validationErrors) {
-	// 		setError(validationErrors)
-	// 		return
-	// 	}
-
-	// 	const userData = {
-	// 		name,
-	// 		email,
-	// 		phoneNumber,
-	// 		username,
-	// 		birthDate,
-	// 		role,
-	// 		gender,
-	// 		password,
-	// 	}
-
-	// 	try {
-	// 		const response = await fetch(
-	// 			"https://becomebetter-api.azurewebsites.net/api/signupUser",
-	// 			{
-	// 				method: "POST",
-	// 				headers: {
-	// 					"Content-Type": "application/json",
-	// 				},
-	// 				body: JSON.stringify(userData),
-	// 			}
-	// 		)
-
-	// 		if (!response.ok) {
-	// 			const errorText = await response.text()
-	// 			console.error("API Error:", errorText)
-	// 			Alert.alert("Signup Failed", errorText)
-	// 			return
-	// 		}
-
-	// 		const result = await response.json()
-	// 		console.log("Signup success:", result)
-	// 		Alert.alert("Success", result.message)
-	// 		router.replace("/coachhome")
-	// 	} catch (error) {
-	// 		console.error("Fetch error:", error)
-	// 		Alert.alert("Error", "Something went wrong. Try again.")
-	// 	}
-	// }
 	const handleSignup = async () => {
 		let profilePictureUrl = null
 
@@ -202,14 +117,16 @@ export default function SignUpScreen() {
 			if (response.ok) {
 				const { token, name, role, id, profilePic } = result
 
-				await AsyncStorage.multiSet([
-					["@token", token],
-					["@name", name],
-					["@userEmail", email],
-					["@role", role],
-					["@id", id],
-					["@profilePic", profilePic || ""],
-				])
+				dispatch(
+					setUser({
+						token,
+						name,
+						email,
+						role,
+						id,
+						profilePicture: profilePic || "",
+					})
+				)
 
 				Alert.alert("✅ Signup Success", `Welcome, ${name}!`)
 				router.replace(role === "Coach" ? "/coachhome" : "/studenthome")
