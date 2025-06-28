@@ -42,11 +42,12 @@ export default function CoachDetailsScreen() {
 		const fetchVideos = async () => {
 			try {
 				const response = await fetch(
-					"https://becomebetter-api.azurewebsites.net/api/GetVideosByStudentCoach?code=AQ2nnLPZa_HBt30WGj-Rn28c5UVujkukSkSFQY9x-jDKAzFumuFCHQ==",
+					`https://becomebetter-api.azurewebsites.net/api/GetVideosByStudentCoach?studentId=${encodeURIComponent(
+						studentId
+					)}&coachId=${encodeURIComponent(params.id)}`,
 					{
-						method: "POST",
+						method: "GET",
 						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ studentId: studentId, coachId: params.id }),
 					}
 				)
 
