@@ -23,19 +23,20 @@ import { useSelector } from "react-redux"
 import { styles } from "@/styles/recordVideoStyle"
 import { RootState } from "@/store/store"
 
-type Params = { studentId: string }
+type Params = { coachId: string }
 type RecordedVideo = { uri: string }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
 export default function RecordVideoScreen() {
-	const { studentId } = useLocalSearchParams<Params>()
+	const { coachId } = useLocalSearchParams<Params>()
 	const router = useRouter()
-
+	const studentId = useSelector((state: RootState) => state.user.id)
 	const cameraRef = useRef<CameraView>(null)
 	const [permission, requestPermission] = useCameraPermissions()
 	const [isRecording, setIsRecording] = useState(false)
 	const [isReady, setIsReady] = useState(false)
+
 	const [zoom, setZoom] = useState(0)
 	const [recordingTime, setRecordingTime] = useState(0)
 	const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
@@ -74,6 +75,7 @@ export default function RecordVideoScreen() {
 						uploadedBy,
 						assignedCoachId,
 						durationSeconds,
+						studentId, // ✅ include studentId in request body
 					}),
 				}
 			)
@@ -525,12 +527,11 @@ export default function RecordVideoScreen() {
 									console.log("Duration (approx):", recordingTime, "seconds")
 
 									const studentEmail = userEmail || "unknown@user.com"
-									const coachId = "gautamgambhir@gmail.com" // 🔧 Replace this with actual logic (from Redux or route)
 									const filename = `video_${Date.now()}.mp4`
 
 									handleVideoUpload(
 										recordedVideoUri,
-										studentEmail,
+										studentId, // ✅ Pass studentId as 7th argument
 										coachId,
 										filename,
 										recordingTime,
