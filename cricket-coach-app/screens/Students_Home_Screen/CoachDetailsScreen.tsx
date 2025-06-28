@@ -37,7 +37,7 @@ export default function CoachDetailsScreen() {
 	const studentId = useSelector((state: RootState) => state.user.id)
 	// Properly type the coaches array
 	const coaches: Coach[] = params.coaches ? JSON.parse(params.coaches) : []
-
+	//ignore
 	useEffect(() => {
 		const fetchVideos = async () => {
 			try {
