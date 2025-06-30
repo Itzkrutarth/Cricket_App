@@ -1,6 +1,6 @@
 import { AntDesign } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import {
 	Alert,
 	Text,
@@ -14,6 +14,7 @@ import { styles } from "../styles/SignInStyles"
 import { useDispatch } from "react-redux"
 import { setUser } from "@/store/userSlice"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { registerForPushNotificationsAsync } from "@/utils/notifications"
 
 export default function SignInScreen() {
 	const router = useRouter()
@@ -23,6 +24,7 @@ export default function SignInScreen() {
 	const [password, setPassword] = useState("")
 	const [error, setError] = useState("")
 	const [loading, setLoading] = useState(false)
+	const [pushToken, setPushToken] = useState<string | null>(null)
 
 	const handleLogin = async () => {
 		const validationError = validateSignIn(email.trim(), password.trim())
@@ -76,6 +78,17 @@ export default function SignInScreen() {
 
 				Alert.alert("✅ Login Success", `Welcome, ${name}!`)
 
+				if (pushToken) {
+					await fetch(
+						"https://becomebetter-api.azurewebsites.net/api/SavePushToken",
+						{
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({ email: result.email || email, pushToken }),
+						}
+					)
+				}
+
 				// Navigate based on role
 				if (normalizedRole === "Coach") {
 					router.replace("/coachhome")
@@ -94,7 +107,14 @@ export default function SignInScreen() {
 			setLoading(false)
 		}
 	}
-
+	useEffect(() => {
+		const getToken = async () => {
+			const token = await registerForPushNotificationsAsync()
+			console.log("📱 Push token:", token)
+			setPushToken(token)
+		}
+		getToken()
+	}, [])
 	return (
 		<View style={styles.container}>
 			<Text style={styles.header}>Welcome Back!</Text>

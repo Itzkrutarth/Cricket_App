@@ -21,7 +21,12 @@
         "foregroundImage": "./assets/images/splash.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.itzkrutarth.cricketcoachapp"
     },
     "web": {
       "bundler": "metro",
@@ -45,10 +50,18 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to record videos."
         }
       ],
-      "expo-video"
+      "expo-video",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "483e632d-f8e7-4fa6-b6d3-9e68a1d4d94f"
+      },
+      "router": {}
+    },
+    "owner": "itzkrutarth"
   }
 }

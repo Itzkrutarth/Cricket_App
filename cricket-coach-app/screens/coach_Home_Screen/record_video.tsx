@@ -11,6 +11,7 @@ import {
 	Dimensions,
 	Modal,
 } from "react-native"
+import axios from "axios"
 import * as FileSystem from "expo-file-system"
 import { CameraView, useCameraPermissions } from "expo-camera"
 import { Video } from "expo-av"
@@ -64,7 +65,36 @@ export default function RecordVideoScreen() {
 	console.log("👥 Role (isCoach):", isCoach)
 	console.log("📩 assignedCoachId (coach email):", assignedCoachId)
 	console.log("🎯 targetStudent (recordedFor):", targetStudent)
+	// Call this function after video upload success
+	const notifyCoach = async ({
+		coachId,
+		videoId,
+		studentName,
+	}: {
+		coachId: string
+		videoId: string
+		studentName?: string
+	}) => {
+		try {
+			const response = await axios.post(
+				"https://becomebetter-api.azurewebsites.net/api/notifycoach",
+				{
+					coachId,
+					videoId,
+					studentName,
+				},
+				{
+					headers: {
+						"Content-Type": "application/json",
+					},
+				}
+			)
 
+			console.log("✅ Notification sent:", response.data)
+		} catch (error) {
+			console.error("❌ Notification error:", error)
+		}
+	}
 	const handleVideoUpload = async (
 		videoUri: string,
 		uploadedBy: string,
@@ -73,7 +103,8 @@ export default function RecordVideoScreen() {
 		recordedFor: string,
 		durationSeconds: number,
 		onSuccess: () => void,
-		onFailure: () => void
+		onFailure: () => void,
+		studentName?: string
 	) => {
 		try {
 			const base64 = await FileSystem.readAsStringAsync(videoUri, {
@@ -81,15 +112,15 @@ export default function RecordVideoScreen() {
 			})
 
 			const response = await fetch(
-				"https://becomebetter-api.azurewebsites.net/api/UploadVideo?",
+				"https://becomebetter-api.azurewebsites.net/api/UploadVideo",
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
 						videoData: base64,
 						filename,
-						uploadedBy, // logged-in user (student or coach)
-						assignedCoachId, // coach's email
+						uploadedBy,
+						assignedCoachId,
 						recordedFor,
 						durationSeconds,
 					}),
@@ -97,23 +128,33 @@ export default function RecordVideoScreen() {
 			)
 
 			const resText = await response.text()
-
 			console.log("Status:", response.status)
 			console.log("Response body:", resText)
 
 			if (!response.ok) throw new Error("Upload failed")
 
+			let result: { videoId?: string } = {}
 			try {
-				const result = JSON.parse(resText)
+				result = JSON.parse(resText)
 				console.log("✅ Upload success:", result)
 			} catch (e) {
-				console.warn("Response is not JSON:", resText)
+				console.warn("⚠️ Response is not valid JSON:", resText)
+			}
+
+			if (result.videoId) {
+				await notifyCoach({
+					coachId: assignedCoachId,
+					videoId: result.videoId,
+					studentName,
+				})
+			} else {
+				console.warn("⚠️ Missing videoId in upload response")
 			}
 
 			Alert.alert("Success", "Video uploaded successfully!")
 			onSuccess()
 		} catch (error) {
-			console.error("Upload error:", error)
+			console.error("❌ Upload error:", error)
 			Alert.alert("Error", "Failed to upload video. Try again.")
 			onFailure()
 		}

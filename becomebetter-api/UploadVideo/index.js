@@ -39,6 +39,7 @@ module.exports = async function (context, req) {
 		)
 		const containerClient = blobServiceClient.getContainerClient("videos")
 		const blockBlobClient = containerClient.getBlockBlobClient(filename)
+		const videoId = filename
 
 		await blockBlobClient.uploadData(buffer, {
 			blobHTTPHeaders: { blobContentType: "video/mp4" },
@@ -73,6 +74,7 @@ module.exports = async function (context, req) {
 			body: {
 				message: "Video uploaded and saved successfully",
 				videoUrl,
+				videoId: videoId, // Add this line
 			},
 		}
 	} catch (error) {
