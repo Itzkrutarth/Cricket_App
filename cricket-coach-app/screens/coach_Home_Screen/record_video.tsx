@@ -527,7 +527,11 @@ export default function RecordVideoScreen() {
 									console.log("Duration (approx):", recordingTime, "seconds")
 
 									const studentEmail = userEmail || "unknown@user.com"
-									const filename = `video_${Date.now()}.mp4`
+									const timestamp = Date.now()
+									const filename = `${studentEmail.replace(
+										/[@.]/g,
+										"_"
+									)}_${timestamp}.mp4`
 
 									handleVideoUpload(
 										recordedVideoUri,
