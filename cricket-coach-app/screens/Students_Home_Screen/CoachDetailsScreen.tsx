@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from "react"
-import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native"
+import React, { useCallback, useEffect, useState } from "react"
+import {
+	View,
+	Text,
+	Image,
+	TouchableOpacity,
+	ScrollView,
+	RefreshControl,
+} from "react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { Entypo } from "@expo/vector-icons"
 import Header from "../../screens/Students_Home_Screen/Header_1"
@@ -7,13 +14,13 @@ import { styles } from "@/styles/coach_details"
 import { useSelector } from "react-redux"
 import { RootState } from "@/store/store"
 import { Video, ResizeMode } from "expo-av"
+import { useFocusEffect } from "@react-navigation/native"
 
 type Coach = {
 	id: string
 	name?: string
 	specialization?: string
 	photoUrl?: string
-	// Add other coach properties as needed
 }
 
 type Params = {
@@ -21,57 +28,81 @@ type Params = {
 	name: string
 	photoUrl: string
 	viewMode?: string
-	coaches?: string // This is passed as a stringified JSON
+	coaches?: string
 }
 
 type UploadedVideo = {
+	id: string
 	videoUrl: string
-	uploadedAt: string
+	uploadedBy: string
+	ownerId: string
+	assignedCoachId: string
+	visibleTo: string[]
+	type: string
+	linkedVideoId: string | null
+	isPrivate: boolean
 	durationSeconds: number
+	feedbackStatus: string
+	uploadedAt: string
+	sasUrl?: string
 }
+
+const fetchedCoaches: { [key: string]: boolean } = {}
 
 export default function CoachDetailsScreen() {
 	const router = useRouter()
 	const params = useLocalSearchParams<Params>()
 	const [studentVideos, setStudentVideos] = useState<UploadedVideo[]>([])
+	const [loading, setLoading] = useState(false)
 	const studentId = useSelector((state: RootState) => state.user.id)
-	// Properly type the coaches array
 	const coaches: Coach[] = params.coaches ? JSON.parse(params.coaches) : []
-	//ignore
-	useEffect(() => {
-		const fetchVideos = async () => {
-			try {
-				const response = await fetch(
-					`https://becomebetter-api.azurewebsites.net/api/GetVideosByStudentCoach?studentId=${encodeURIComponent(
-						studentId
-					)}&coachId=${encodeURIComponent(params.id)}`,
-					{
-						method: "GET",
-						headers: { "Content-Type": "application/json" },
-					}
-				)
+	const coachId = params.id
 
-				if (!response.ok) {
-					throw new Error(`HTTP error ${response.status}`)
-				}
-
-				const data = await response.json()
-				setStudentVideos(data)
-			} catch (error) {
-				console.error("Error fetching student-coach videos:", error)
-			}
+	const fetchVideos = async () => {
+		setLoading(true)
+		try {
+			const response = await fetch(
+				`https://becomebetter-api.azurewebsites.net/api/GetVideosByStudentCoach?studentId=${encodeURIComponent(
+					studentId
+				)}&coachId=${encodeURIComponent(coachId)}`
+			)
+			const data = await response.json()
+			setStudentVideos(data)
+			fetchedCoaches[coachId] = true
+		} catch (error) {
+			console.error("Error fetching student-coach videos:", error)
+		} finally {
+			setLoading(false)
 		}
+	}
 
-		if (studentId && params.id) fetchVideos()
-	}, [studentId, params.id])
+	useEffect(() => {
+		fetchedCoaches[coachId] = false
+	}, [coachId])
+
+	useFocusEffect(
+		useCallback(() => {
+			if (studentId && coachId && !fetchedCoaches[coachId]) {
+				fetchVideos()
+			}
+		}, [studentId, coachId])
+	)
 
 	return (
 		<View style={styles.container}>
-			{/* Header */}
 			<Header title="Coach Details" />
-
-			<ScrollView style={styles.scrollContent}>
-				{/* Profile */}
+			<ScrollView
+				style={styles.scrollContent}
+				refreshControl={
+					<RefreshControl
+						refreshing={loading}
+						onRefresh={() => {
+							fetchedCoaches[coachId] = false
+							fetchVideos()
+						}}
+					/>
+				}
+			>
 				<Image source={{ uri: params.photoUrl }} style={styles.profileImage} />
 				<Text style={styles.name}>{params.name}</Text>
 				<Text style={styles.subTitle}>
@@ -79,10 +110,7 @@ export default function CoachDetailsScreen() {
 					{coaches.find((c) => c.id === params.id)?.specialization ||
 						"Not specified"}
 				</Text>
-
-				{/* Sample Shots Section */}
 				<Text style={styles.sectionTitle}>Sample Shots</Text>
-
 				<View style={styles.shotsContainer}>
 					{studentVideos.length === 0 ? (
 						<Text
@@ -91,33 +119,71 @@ export default function CoachDetailsScreen() {
 							No videos uploaded for this coach yet.
 						</Text>
 					) : (
-						studentVideos.map((video, idx) => (
-							<View
-								key={idx}
-								style={{ marginBottom: 16, alignItems: "center" }}
-							>
-								<Video
-									source={{ uri: video.videoUrl }}
-									style={styles.videoThumbnail}
-									useNativeControls
-									resizeMode={ResizeMode.COVER}
-								/>
-
-								<Text style={styles.videoTitle}>
-									Uploaded on {new Date(video.uploadedAt).toLocaleDateString()}{" "}
-									({video.durationSeconds}s)
-								</Text>
-							</View>
-						))
+						<View
+							style={{
+								flexDirection: "row",
+								flexWrap: "wrap",
+								justifyContent: "space-between",
+							}}
+						>
+							{studentVideos.map((video, idx) => (
+								<View key={idx} style={{ width: "48%", marginBottom: 16 }}>
+									<TouchableOpacity
+										onPress={() =>
+											router.navigate({
+												pathname: "/coach-home/VideoPlayerScreen",
+												params: {
+													videoSource: video.sasUrl || video.videoUrl,
+													title: video.id,
+													id: video.id,
+												},
+											})
+										}
+									>
+										<Video
+											source={{ uri: video.sasUrl || video.videoUrl }}
+											style={{
+												width: "100%",
+												height: 160,
+												borderRadius: 8,
+											}}
+											resizeMode={ResizeMode.CONTAIN}
+											shouldPlay={false}
+											isMuted
+											isLooping={false}
+											useNativeControls={false}
+										/>
+									</TouchableOpacity>
+									<Text
+										style={{ fontSize: 12, marginTop: 4, textAlign: "center" }}
+									>
+										{new Date(video.uploadedAt).toLocaleDateString()} (
+										{video.durationSeconds}s)
+									</Text>
+									<Text
+										style={{
+											color:
+												video.feedbackStatus === "pending" ? "orange" : "green",
+											fontSize: 12,
+											textAlign: "center",
+											marginTop: 2,
+										}}
+									>
+										{video.feedbackStatus === "pending"
+											? "Pending"
+											: "Reviewed"}
+									</Text>
+								</View>
+							))}
+						</View>
 					)}
 				</View>
-				{/* Record Video Button */}
 				<TouchableOpacity
 					style={styles.recordButton}
 					onPress={() =>
 						router.push({
 							pathname: "/coach-home/RecordVideo",
-							params: { coachId: params.id }, // ✅ Pass coach ID
+							params: { coachId: params.id },
 						})
 					}
 				>

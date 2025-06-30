@@ -57,7 +57,8 @@ const deleteVideoById = async (videoId: string) => {
 const AllVideosScreen = () => {
 	const router = useRouter()
 	const [videoData, setVideoData] = useState<any[]>([])
-	const [loading, setLoading] = useState(true)
+	const [loading, setLoading] = useState(false)
+
 	const userEmail = useSelector((state: RootState) => state.user.email)
 
 	const [favorites, setFavorites] = useState<string[]>([])
