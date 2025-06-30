@@ -1,5 +1,5 @@
 // StudentDetail.tsx
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { Entypo, Feather } from "@expo/vector-icons"
@@ -7,6 +7,7 @@ import Header from "./Header_1"
 import { styles } from "../../styles/student_details"
 import { useSelector } from "react-redux"
 import { RootState } from "@/store/store"
+import { ResizeMode, Video } from "expo-av"
 
 export default function StudentDetail() {
 	const router = useRouter()
@@ -23,21 +24,6 @@ export default function StudentDetail() {
 		experience1 = "Aggressive right-handed batsman with excellent technique.",
 		viewMode = "my",
 	} = useLocalSearchParams()
-
-	// const recentVideos = [
-	// 	{
-	// 		id: "1",
-	// 		title: "Drive Practice",
-	// 		path: "../../assets/videos/jay.mp4",
-	// 		thumbnail: "https://picsum.photos/200/300?1",
-	// 	},
-	// 	{
-	// 		id: "2",
-	// 		title: "Cover Shot",
-	// 		path: "../../assets/videos/video.mp4",
-	// 		thumbnail: "https://picsum.photos/200/300?2",
-	// 	},
-	// ]
 
 	const fetchStudentCoachVideos = async () => {
 		if (!email || !coachEmail) return
@@ -57,6 +43,12 @@ export default function StudentDetail() {
 			setLoading(false)
 		}
 	}
+
+	useEffect(() => {
+		if (viewMode === "my") {
+			fetchStudentCoachVideos()
+		}
+	}, [])
 
 	const performance = {
 		batting: 82,
@@ -109,28 +101,81 @@ export default function StudentDetail() {
 					<>
 						<Text style={styles.sectionTitle}>Recent Videos</Text>
 						<View style={styles.videoGrid}>
-							{recentVideos.map((video) => (
-								<View key={video.id} style={{ marginBottom: 12 }}>
-									<TouchableOpacity
-										onPress={() =>
-											router.push({
-												pathname: "/coach-home/VideoPlayerScreen",
-												params: {
-													videoPath: video.path,
-													title: video.title,
-												},
-											})
-										}
-									>
-										<Image
-											source={{ uri: video.thumbnail }}
-											style={styles.videoThumbnail}
-											resizeMode="cover"
-										/>
-									</TouchableOpacity>
-									<Text style={styles.videoTitle}>{video.title}</Text>
+							{recentVideos.length === 0 ? (
+								<Text
+									style={{
+										textAlign: "center",
+										color: "#777",
+										marginVertical: 10,
+									}}
+								>
+									No videos uploaded yet.
+								</Text>
+							) : (
+								<View
+									style={{
+										flexDirection: "row",
+										flexWrap: "wrap",
+										justifyContent: "space-between",
+									}}
+								>
+									{recentVideos.map((video, idx) => (
+										<View key={idx} style={{ width: "48%", marginBottom: 16 }}>
+											<TouchableOpacity
+												onPress={() =>
+													router.navigate({
+														pathname: "/coach-home/VideoPlayerScreen",
+														params: {
+															videoSource: video.sasUrl || video.videoUrl,
+															title: video.id,
+															id: video.id,
+														},
+													})
+												}
+											>
+												<Video
+													source={{ uri: video.sasUrl || video.videoUrl }}
+													style={{
+														width: "100%",
+														height: 160,
+														borderRadius: 8,
+													}}
+													resizeMode={ResizeMode.CONTAIN}
+													shouldPlay={false}
+													isMuted
+													isLooping={false}
+													useNativeControls={false}
+												/>
+											</TouchableOpacity>
+											<Text
+												style={{
+													fontSize: 12,
+													marginTop: 4,
+													textAlign: "center",
+												}}
+											>
+												{new Date(video.uploadedAt).toLocaleDateString()} (
+												{video.durationSeconds}s)
+											</Text>
+											<Text
+												style={{
+													color:
+														video.feedbackStatus === "pending"
+															? "orange"
+															: "green",
+													fontSize: 12,
+													textAlign: "center",
+													marginTop: 2,
+												}}
+											>
+												{video.feedbackStatus === "pending"
+													? "Pending"
+													: "Reviewed"}
+											</Text>
+										</View>
+									))}
 								</View>
-							))}
+							)}
 						</View>
 
 						{/* Saved/Annotated Video Buttons */}
@@ -162,7 +207,7 @@ export default function StudentDetail() {
 							onPress={() =>
 								router.push({
 									pathname: "/coach-home/RecordVideo",
-									params: { studentId: id },
+									params: { coachId: coachEmail, studentEmail: email },
 								})
 							}
 						>

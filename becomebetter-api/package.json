@@ -9,7 +9,8 @@
 	"dependencies": {
 		"@azure/cosmos": "^4.4.1",
 		"@azure/functions": "^4.0.0",
-		"@azure/storage-blob": "^12.27.0"
+		"@azure/storage-blob": "^12.27.0",
+		"node-fetch": "^2.7.0"
 	},
 	"devDependencies": {
 		"azure-functions-core-tools": "^4.x"

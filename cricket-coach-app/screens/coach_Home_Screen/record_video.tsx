@@ -11,6 +11,7 @@ import {
 	Dimensions,
 	Modal,
 } from "react-native"
+import axios from "axios"
 import * as FileSystem from "expo-file-system"
 import { CameraView, useCameraPermissions } from "expo-camera"
 import { Video } from "expo-av"
@@ -29,9 +30,16 @@ type RecordedVideo = { uri: string }
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
 export default function RecordVideoScreen() {
-	const { coachId } = useLocalSearchParams<Params>()
 	const router = useRouter()
-	const studentId = useSelector((state: RootState) => state.user.id)
+	const { coachId, studentEmail } = useLocalSearchParams<
+		Params & { studentEmail?: string }
+	>()
+	const loggedInUserEmail = useSelector((state: RootState) => state.user.email)
+	const isCoach = useSelector((state: RootState) => state.user.role) === "Coach"
+
+	const assignedCoachId = isCoach ? loggedInUserEmail : coachId // for students, coachId is passed in URL
+	const targetStudent = isCoach ? studentEmail || "" : loggedInUserEmail
+
 	const cameraRef = useRef<CameraView>(null)
 	const [permission, requestPermission] = useCameraPermissions()
 	const [isRecording, setIsRecording] = useState(false)
@@ -42,7 +50,7 @@ export default function RecordVideoScreen() {
 	const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
 		null
 	)
-
+	const userEmail = useSelector((state: RootState) => state.user.email)
 	const [initialDistance, setInitialDistance] = useState(0)
 	const [initialZoom, setInitialZoom] = useState(0)
 	const [showZoomSlider, setShowZoomSlider] = useState(false)
@@ -50,14 +58,53 @@ export default function RecordVideoScreen() {
 	const [recordedVideoUri, setRecordedVideoUri] = useState<string | null>(null)
 	const [showPreview, setShowPreview] = useState(false)
 
+	console.log("📍 Screen opened: RecordVideoScreen")
+	console.log("🔑 Route Params - coachId:", coachId)
+	console.log("🔑 Route Params - studentEmail:", studentEmail)
+	console.log("👤 Logged-in User Email:", loggedInUserEmail)
+	console.log("👥 Role (isCoach):", isCoach)
+	console.log("📩 assignedCoachId (coach email):", assignedCoachId)
+	console.log("🎯 targetStudent (recordedFor):", targetStudent)
+	// Call this function after video upload success
+	const notifyCoach = async ({
+		coachId,
+		videoId,
+		studentName,
+	}: {
+		coachId: string
+		videoId: string
+		studentName?: string
+	}) => {
+		try {
+			const response = await axios.post(
+				"https://becomebetter-api.azurewebsites.net/api/notifycoach",
+				{
+					coachId,
+					videoId,
+					studentName,
+				},
+				{
+					headers: {
+						"Content-Type": "application/json",
+					},
+				}
+			)
+
+			console.log("✅ Notification sent:", response.data)
+		} catch (error) {
+			console.error("❌ Notification error:", error)
+		}
+	}
 	const handleVideoUpload = async (
 		videoUri: string,
-		uploadedBy: string, // student email
+		uploadedBy: string,
 		assignedCoachId: string,
 		filename: string,
+		recordedFor: string,
 		durationSeconds: number,
 		onSuccess: () => void,
-		onFailure: () => void
+		onFailure: () => void,
+		studentName?: string
 	) => {
 		try {
 			const base64 = await FileSystem.readAsStringAsync(videoUri, {
@@ -74,30 +121,40 @@ export default function RecordVideoScreen() {
 						filename,
 						uploadedBy,
 						assignedCoachId,
+						recordedFor,
 						durationSeconds,
-						studentId, // ✅ include studentId in request body
 					}),
 				}
 			)
 
 			const resText = await response.text()
-
 			console.log("Status:", response.status)
 			console.log("Response body:", resText)
 
 			if (!response.ok) throw new Error("Upload failed")
 
+			let result: { videoId?: string } = {}
 			try {
-				const result = JSON.parse(resText)
+				result = JSON.parse(resText)
 				console.log("✅ Upload success:", result)
 			} catch (e) {
-				console.warn("Response is not JSON:", resText)
+				console.warn("⚠️ Response is not valid JSON:", resText)
+			}
+
+			if (result.videoId) {
+				await notifyCoach({
+					coachId: assignedCoachId,
+					videoId: result.videoId,
+					studentName,
+				})
+			} else {
+				console.warn("⚠️ Missing videoId in upload response")
 			}
 
 			Alert.alert("Success", "Video uploaded successfully!")
 			onSuccess()
 		} catch (error) {
-			console.error("Upload error:", error)
+			console.error("❌ Upload error:", error)
 			Alert.alert("Error", "Failed to upload video. Try again.")
 			onFailure()
 		}
@@ -165,8 +222,6 @@ export default function RecordVideoScreen() {
 			}
 		}
 	}, [])
-
-	const userEmail = useSelector((state: RootState) => state.user.email)
 
 	useEffect(() => {
 		const requestCameraPermission = async () => {
@@ -526,19 +581,19 @@ export default function RecordVideoScreen() {
 									console.log("URI:", recordedVideoUri)
 									console.log("Duration (approx):", recordingTime, "seconds")
 
-									const studentEmail = userEmail || "unknown@user.com"
 									const timestamp = Date.now()
-									const filename = `${studentEmail.replace(
+									const filename = `${targetStudent.replace(
 										/[@.]/g,
 										"_"
 									)}_${timestamp}.mp4`
 
 									handleVideoUpload(
 										recordedVideoUri,
-										studentId, // ✅ Pass studentId as 7th argument
-										coachId,
+										loggedInUserEmail, // uploadedBy
+										assignedCoachId, // assignedCoachId
 										filename,
-										recordingTime,
+										targetStudent, // ✅ recordedFor
+										recordingTime, // durationSeconds
 										() => setShowPreview(false),
 										() => {}
 									)

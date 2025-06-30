@@ -6,19 +6,26 @@ const AZURE_STORAGE_CONNECTION_STRING =
 const COSMOS_CONNECTION_STRING = process.env.COSMOS_CONNECTION_STRING
 
 module.exports = async function (context, req) {
-	const { videoData, filename, uploadedBy, assignedCoachId, durationSeconds } =
-		req.body
+	const {
+		videoData,
+		filename,
+		uploadedBy, // person uploading (coach or student)
+		assignedCoachId, // always a coach
+		recordedFor, // NEW: student for whom video was recorded
+		durationSeconds,
+	} = req.body
 
 	if (
 		!videoData ||
 		!filename ||
 		!uploadedBy ||
 		!assignedCoachId ||
+		!recordedFor ||
 		!durationSeconds
 	) {
 		context.res = {
 			status: 400,
-			body: "Missing required fields (videoData, filename, uploadedBy, assignedCoachId, durationSeconds)",
+			body: "Missing required fields (videoData, filename, uploadedBy, assignedCoachId, recordedFor, durationSeconds)",
 		}
 		return
 	}
@@ -26,12 +33,13 @@ module.exports = async function (context, req) {
 	try {
 		const buffer = Buffer.from(videoData, "base64")
 
-		// Upload video to Azure Blob Storage
+		// Upload to Azure Blob Storage
 		const blobServiceClient = BlobServiceClient.fromConnectionString(
 			AZURE_STORAGE_CONNECTION_STRING
 		)
 		const containerClient = blobServiceClient.getContainerClient("videos")
 		const blockBlobClient = containerClient.getBlockBlobClient(filename)
+		const videoId = filename
 
 		await blockBlobClient.uploadData(buffer, {
 			blobHTTPHeaders: { blobContentType: "video/mp4" },
@@ -47,8 +55,8 @@ module.exports = async function (context, req) {
 		const newItem = {
 			id: filename,
 			videoUrl,
-			uploadedBy, // student
-			ownerId: uploadedBy, // partition key
+			uploadedBy, // partition key
+			recordedFor, // always the student
 			assignedCoachId,
 			visibleTo: [assignedCoachId],
 			type: "original",
@@ -59,13 +67,14 @@ module.exports = async function (context, req) {
 			uploadedAt: new Date().toISOString(),
 		}
 
-		await container.items.create(newItem)
+		await container.items.create(newItem, { partitionKey: uploadedBy })
 
 		context.res = {
 			status: 200,
 			body: {
 				message: "Video uploaded and saved successfully",
 				videoUrl,
+				videoId: videoId, // Add this line
 			},
 		}
 	} catch (error) {
