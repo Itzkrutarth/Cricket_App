@@ -41,7 +41,7 @@ const fetchVideosByCoach = async (email: string) => {
 const deleteVideoById = async (videoId: string) => {
 	try {
 		const response = await fetch(
-			`https://becomebetter-api.azurewebsites.net/api/DeleteVideoById?videoId=${encodeURIComponent(
+			`https://becomebetter-api.azurewebsites.net/api/DeleteVideoById?id=${encodeURIComponent(
 				videoId
 			)}`,
 			{ method: "DELETE" }
