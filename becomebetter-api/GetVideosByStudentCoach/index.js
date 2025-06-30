@@ -64,10 +64,10 @@ module.exports = async function (context, req) {
 
 		const querySpec = {
 			query: `
-        SELECT * 
-        FROM c 
-        WHERE c.ownerId = @studentId AND c.assignedCoachId = @coachId
-      `,
+		SELECT * 
+		FROM c 
+		WHERE c.recordedFor = @studentId AND c.assignedCoachId = @coachId
+	`,
 			parameters: [
 				{ name: "@studentId", value: studentId },
 				{ name: "@coachId", value: coachId },
