@@ -162,7 +162,7 @@ export default function StudentDetail() {
 							onPress={() =>
 								router.push({
 									pathname: "/coach-home/RecordVideo",
-									params: { studentId: id },
+									params: { coachId: coachEmail, studentEmail: email },
 								})
 							}
 						>

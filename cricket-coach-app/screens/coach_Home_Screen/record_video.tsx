@@ -29,9 +29,16 @@ type RecordedVideo = { uri: string }
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 
 export default function RecordVideoScreen() {
-	const { coachId } = useLocalSearchParams<Params>()
 	const router = useRouter()
-	const studentId = useSelector((state: RootState) => state.user.id)
+	const { coachId, studentEmail } = useLocalSearchParams<
+		Params & { studentEmail?: string }
+	>()
+	const loggedInUserEmail = useSelector((state: RootState) => state.user.email)
+	const isCoach = useSelector((state: RootState) => state.user.role) === "Coach"
+
+	const assignedCoachId = isCoach ? loggedInUserEmail : coachId // for students, coachId is passed in URL
+	const targetStudent = isCoach ? studentEmail || "" : loggedInUserEmail
+
 	const cameraRef = useRef<CameraView>(null)
 	const [permission, requestPermission] = useCameraPermissions()
 	const [isRecording, setIsRecording] = useState(false)
@@ -42,7 +49,7 @@ export default function RecordVideoScreen() {
 	const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
 		null
 	)
-
+	const userEmail = useSelector((state: RootState) => state.user.email)
 	const [initialDistance, setInitialDistance] = useState(0)
 	const [initialZoom, setInitialZoom] = useState(0)
 	const [showZoomSlider, setShowZoomSlider] = useState(false)
@@ -50,11 +57,20 @@ export default function RecordVideoScreen() {
 	const [recordedVideoUri, setRecordedVideoUri] = useState<string | null>(null)
 	const [showPreview, setShowPreview] = useState(false)
 
+	console.log("📍 Screen opened: RecordVideoScreen")
+	console.log("🔑 Route Params - coachId:", coachId)
+	console.log("🔑 Route Params - studentEmail:", studentEmail)
+	console.log("👤 Logged-in User Email:", loggedInUserEmail)
+	console.log("👥 Role (isCoach):", isCoach)
+	console.log("📩 assignedCoachId (coach email):", assignedCoachId)
+	console.log("🎯 targetStudent (recordedFor):", targetStudent)
+
 	const handleVideoUpload = async (
 		videoUri: string,
-		uploadedBy: string, // student email
+		uploadedBy: string,
 		assignedCoachId: string,
 		filename: string,
+		recordedFor: string,
 		durationSeconds: number,
 		onSuccess: () => void,
 		onFailure: () => void
@@ -65,17 +81,17 @@ export default function RecordVideoScreen() {
 			})
 
 			const response = await fetch(
-				"https://becomebetter-api.azurewebsites.net/api/UploadVideo",
+				"https://becomebetter-api.azurewebsites.net/api/UploadVideo?",
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
 						videoData: base64,
 						filename,
-						uploadedBy,
-						assignedCoachId,
+						uploadedBy, // logged-in user (student or coach)
+						assignedCoachId, // coach's email
+						recordedFor,
 						durationSeconds,
-						studentId, // ✅ include studentId in request body
 					}),
 				}
 			)
@@ -165,8 +181,6 @@ export default function RecordVideoScreen() {
 			}
 		}
 	}, [])
-
-	const userEmail = useSelector((state: RootState) => state.user.email)
 
 	useEffect(() => {
 		const requestCameraPermission = async () => {
@@ -526,19 +540,19 @@ export default function RecordVideoScreen() {
 									console.log("URI:", recordedVideoUri)
 									console.log("Duration (approx):", recordingTime, "seconds")
 
-									const studentEmail = userEmail || "unknown@user.com"
 									const timestamp = Date.now()
-									const filename = `${studentEmail.replace(
+									const filename = `${targetStudent.replace(
 										/[@.]/g,
 										"_"
 									)}_${timestamp}.mp4`
 
 									handleVideoUpload(
 										recordedVideoUri,
-										studentId, // ✅ Pass studentId as 7th argument
-										coachId,
+										loggedInUserEmail, // uploadedBy
+										assignedCoachId, // assignedCoachId
 										filename,
-										recordingTime,
+										targetStudent, // ✅ recordedFor
+										recordingTime, // durationSeconds
 										() => setShowPreview(false),
 										() => {}
 									)
