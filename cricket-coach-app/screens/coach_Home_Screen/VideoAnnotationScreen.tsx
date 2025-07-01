@@ -23,6 +23,8 @@ import { styles } from "@/styles/VideoAnnotationEditor";
 import { useDispatch } from "react-redux";
 import { markTaskCompleted } from "@/store/taskSlice";
 import Header from "./Header_1";
+import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
 // Type definitions
 interface DrawingAnnotation {
   id: number;
@@ -92,6 +94,12 @@ const VideoAnnotationScreen = () => {
 
   const [selectedFrameIndex, setSelectedFrameIndex] = useState(0);
   const [isFrameScrolling, setIsFrameScrolling] = useState(false);
+
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [voiceNotes, setVoiceNotes] = useState<{ [frame: number]: string }>(
+    {}
+  );
+  const [isRecording, setIsRecording] = useState(false);
 
   const dispatch = useDispatch();
   const { title, videoSource, taskId } = params;
@@ -359,11 +367,12 @@ const VideoAnnotationScreen = () => {
         {
           text: "Save",
           onPress: () => {
-            // Implement your save logic here
-            console.log("Saving annotations:", annotations);
+            // Save logic: include all voiceNotes
+            console.log("Saving annotations:", { annotations, voiceNotes });
             setHasChanges(false);
             Alert.alert("Success", "Annotations saved successfully!");
             if (typeof taskId === "string") dispatch(markTaskCompleted(taskId));
+            goToResultScreen(); // <-- redirect after save
           },
         },
       ]
@@ -433,6 +442,50 @@ const VideoAnnotationScreen = () => {
     } else {
       router.back();
     }
+  };
+
+  const startRecording = async () => {
+    try {
+      await Audio.requestPermissionsAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      setRecording(recording);
+      setIsRecording(true);
+    } catch (err) {
+      Alert.alert("Error", "Failed to start recording.");
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      if (!recording) return;
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      const frame = getCurrentFrameTimestamp();
+      setVoiceNotes((prev) => ({ ...prev, [frame]: uri || "" }));
+      setRecording(null);
+      setIsRecording(false);
+    } catch (err) {
+      Alert.alert("Error", "Failed to stop recording.");
+    }
+  };
+
+  const goToResultScreen = () => {
+    router.push({
+      pathname: "/coach-home/CoachResultScreen",
+      params: {
+        sessionTitle: title, // from your params or state
+        videoThumbnail: typeof videoSource === "string" ? videoSource : "", // or a generated thumbnail
+        textNotes: "", // replace with your text notes variable if you have one
+        drills: [], // replace with your drills array if you have one
+        voiceNoteUri: voiceNotes[0] || "", // or pass all voiceNotes if needed
+      },
+    });
   };
 
   return (
@@ -806,7 +859,36 @@ const VideoAnnotationScreen = () => {
             <Text style={styles.toolLabel}>Color</Text>
           </TouchableOpacity>
         </View>
-
+ <View style={styles.toolsRow}>
+          {/* Recording Tools */}
+          <TouchableOpacity
+            style={[styles.toolButton, styles.actionButton]}
+            onPress={isRecording ? stopRecording : startRecording}
+          >
+            <Ionicons
+              name={isRecording ? "mic-off" : "mic"}
+              size={24}
+              color={isRecording ? "#FF3030" : "#fff"}
+            />
+            <Text style={styles.toolLabel}>
+              {isRecording ? "Stop" : "Record"}
+            </Text>
+          </TouchableOpacity>
+          {voiceNotes[getCurrentFrameTimestamp()] && (
+            <TouchableOpacity
+              style={[styles.toolButton, styles.actionButton]}
+              onPress={async () => {
+                const { sound } = await Audio.Sound.createAsync({
+                  uri: voiceNotes[getCurrentFrameTimestamp()],
+                });
+                await sound.playAsync();
+              }}
+            >
+              <Ionicons name="play" size={24} color="#FFD700" />
+              <Text style={styles.toolLabel}>Play Note</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={styles.toolsRow}>
           {/* Action Tools */}
           <TouchableOpacity
@@ -886,6 +968,8 @@ const VideoAnnotationScreen = () => {
             </Text>
           </TouchableOpacity>
         </View>
+
+       
       </View>
 
       {/* Status Bar */}

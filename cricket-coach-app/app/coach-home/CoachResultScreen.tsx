@@ -1,0 +1,2 @@
+import CoachAnnotationResultScreen from "@/screens/coach_Home_Screen/CoachAnnotationResultScreen";
+export default CoachAnnotationResultScreen;
