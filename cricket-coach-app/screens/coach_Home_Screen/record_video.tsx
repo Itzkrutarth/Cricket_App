@@ -10,6 +10,8 @@ import {
 	PanResponder,
 	Dimensions,
 	Modal,
+	TextInput,
+	ScrollView,
 } from "react-native"
 import axios from "axios"
 import * as FileSystem from "expo-file-system"
@@ -37,7 +39,7 @@ export default function RecordVideoScreen() {
 	const loggedInUserEmail = useSelector((state: RootState) => state.user.email)
 	const isCoach = useSelector((state: RootState) => state.user.role) === "Coach"
 
-	const assignedCoachId = isCoach ? loggedInUserEmail : coachId // for students, coachId is passed in URL
+	const assignedCoachId = isCoach ? loggedInUserEmail : coachId
 	const targetStudent = isCoach ? studentEmail || "" : loggedInUserEmail
 
 	const cameraRef = useRef<CameraView>(null)
@@ -57,6 +59,11 @@ export default function RecordVideoScreen() {
 	const zoomSliderTimeout = useRef<number | null>(null)
 	const [recordedVideoUri, setRecordedVideoUri] = useState<string | null>(null)
 	const [showPreview, setShowPreview] = useState(false)
+	
+	// New state for video details
+	const [videoTitle, setVideoTitle] = useState("")
+	const [videoDescription, setVideoDescription] = useState("")
+	const [isUploading, setIsUploading] = useState(false)
 
 	console.log("📍 Screen opened: RecordVideoScreen")
 	console.log("🔑 Route Params - coachId:", coachId)
@@ -65,7 +72,7 @@ export default function RecordVideoScreen() {
 	console.log("👥 Role (isCoach):", isCoach)
 	console.log("📩 assignedCoachId (coach email):", assignedCoachId)
 	console.log("🎯 targetStudent (recordedFor):", targetStudent)
-	// Call this function after video upload success
+
 	const notifyCoach = async ({
 		coachId,
 		videoId,
@@ -95,6 +102,7 @@ export default function RecordVideoScreen() {
 			console.error("❌ Notification error:", error)
 		}
 	}
+
 	const handleVideoUpload = async (
 		videoUri: string,
 		uploadedBy: string,
@@ -102,11 +110,14 @@ export default function RecordVideoScreen() {
 		filename: string,
 		recordedFor: string,
 		durationSeconds: number,
+		title: string,
+		description: string,
 		onSuccess: () => void,
 		onFailure: () => void,
 		studentName?: string
 	) => {
 		try {
+			setIsUploading(true)
 			const base64 = await FileSystem.readAsStringAsync(videoUri, {
 				encoding: FileSystem.EncodingType.Base64,
 			})
@@ -123,6 +134,8 @@ export default function RecordVideoScreen() {
 						assignedCoachId,
 						recordedFor,
 						durationSeconds,
+						title,
+						description,
 					}),
 				}
 			)
@@ -157,6 +170,8 @@ export default function RecordVideoScreen() {
 			console.error("❌ Upload error:", error)
 			Alert.alert("Error", "Failed to upload video. Try again.")
 			onFailure()
+		} finally {
+			setIsUploading(false)
 		}
 	}
 
@@ -268,6 +283,7 @@ export default function RecordVideoScreen() {
 			.toString()
 			.padStart(2, "0")}`
 	}
+
 	const handleRecord = async () => {
 		if (!cameraRef.current || isRecording || !isReady) return
 		if (!permission?.granted) {
@@ -306,9 +322,8 @@ export default function RecordVideoScreen() {
 		try {
 			const finalTime = timeFromTimer || recordingTime
 
-			await cameraRef.current.stopRecording() // ✅ No return value
+			await cameraRef.current.stopRecording()
 
-			// `setRecordedVideoUri` should already be triggered inside recordAsync flow
 			setShowPreview(true)
 		} catch (error: any) {
 			console.error("Stop recording error:", error)
@@ -329,6 +344,47 @@ export default function RecordVideoScreen() {
 		} else {
 			handleRecord()
 		}
+	}
+
+	const handleSubmitVideo = () => {
+		if (!videoTitle.trim()) {
+			Alert.alert("Error", "Please enter a video title")
+			return
+		}
+		if (!videoDescription.trim()) {
+			Alert.alert("Error", "Please enter a description")
+			return
+		}
+		if (recordedVideoUri) {
+			const timestamp = Date.now()
+			const filename = `${targetStudent.replace(
+				/[@.]/g,
+				"_"
+			)}_${timestamp}.mp4`
+
+			handleVideoUpload(
+				recordedVideoUri,
+				loggedInUserEmail,
+				assignedCoachId,
+				filename,
+				targetStudent,
+				recordingTime,
+				videoTitle,
+				videoDescription,
+				() => {
+					setShowPreview(false)
+					setVideoTitle("")
+					setVideoDescription("")
+				},
+				() => {}
+			)
+		}
+	}
+
+	const handleBackToRecord = () => {
+		setShowPreview(false)
+		setVideoTitle("")
+		setVideoDescription("")
 	}
 
 	if (!permission) {
@@ -503,66 +559,86 @@ export default function RecordVideoScreen() {
 				</TouchableOpacity>
 			</View>
 
-			{/* Video Preview Modal */}
+			{/* Video Preview Modal with Form */}
 			<Modal
 				visible={showPreview}
 				animationType="slide"
 				presentationStyle="fullScreen"
 				onRequestClose={() => setShowPreview(false)}
 			>
-				<View style={{ flex: 1, backgroundColor: "black" }}>
-					<View
-						style={{
-							position: "absolute",
-							top: 50,
-							left: 20,
-							right: 20,
-							zIndex: 1,
-							flexDirection: "row",
-							justifyContent: "space-between",
-							alignItems: "center",
-						}}
-					>
-						<TouchableOpacity
-							onPress={() => setShowPreview(false)}
-							style={{
-								backgroundColor: "rgba(0, 0, 0, 0.7)",
-								padding: 12,
-								borderRadius: 25,
-								flexDirection: "row",
-								alignItems: "center",
-							}}
-						>
-							<Entypo name="chevron-left" size={24} color="white" />
-							<Text style={{ color: "white", marginLeft: 5, fontSize: 16 }}>
-								Back
-							</Text>
-						</TouchableOpacity>
+				<View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
+					<View style={modalHeaderStyles.header}>
+	<TouchableOpacity 
+		onPress={() => setShowPreview(false)}
+	>
+		<Entypo name="chevron-left" size={30} color="#1D4ED8" />
+	</TouchableOpacity>
+	<Text style={modalHeaderStyles.title}>
+		Video Details
+	</Text>
+	<View style={{ width: 30 }} /> {/* For symmetrical spacing */}
+</View>
 
-						<Text
-							style={{
-								color: "white",
-								fontSize: 18,
-								fontWeight: "bold",
-								backgroundColor: "rgba(0, 0, 0, 0.7)",
-								paddingHorizontal: 16,
-								paddingVertical: 8,
-								borderRadius: 20,
-							}}
-						>
-							Video Preview
-						</Text>
+					<View style={{ flex: 1, marginTop: 100 }}>
+						{recordedVideoUri && (
+							<Video
+								source={{ uri: recordedVideoUri }}
+								style={{ height: 200 }}
+								useNativeControls
+								isLooping
+								shouldPlay={false}
+							/>
+						)}
+
+						<ScrollView style={{ flex: 1, padding: 20 }}>
+							<View style={{ marginBottom: 20 }}>
+								<Text style={{ color: "#333", fontSize: 16, marginBottom: 8, fontWeight: "bold" }}>
+									Video Title *
+								</Text>
+								<TextInput
+									style={{
+										backgroundColor: "white",
+										padding: 12,
+										borderRadius: 8,
+										fontSize: 16,
+										color: "black",
+										borderWidth: 1,
+										borderColor: "#ddd",
+									}}
+									placeholder="Enter video title..."
+									placeholderTextColor="#666"
+									value={videoTitle}
+									onChangeText={setVideoTitle}
+									multiline={false}
+								/>
+							</View>
+
+							<View style={{ marginBottom: 30 }}>
+								<Text style={{ color: "#333", fontSize: 16, marginBottom: 8, fontWeight: "bold" }}>
+									Short Description of the Shot *
+								</Text>
+								<TextInput
+									style={{
+										backgroundColor: "white",
+										padding: 12,
+										borderRadius: 8,
+										fontSize: 16,
+										color: "black",
+										minHeight: 100,
+										textAlignVertical: "top",
+										borderWidth: 1,
+										borderColor: "#ddd",
+									}}
+									placeholder="Describe the shot you played..."
+									placeholderTextColor="#666"
+									value={videoDescription}
+									onChangeText={setVideoDescription}
+									multiline={true}
+									numberOfLines={4}
+								/>
+							</View>
+						</ScrollView>
 					</View>
-
-					{recordedVideoUri && (
-						<Video
-							source={{ uri: recordedVideoUri }}
-							style={{ flex: 1 }}
-							useNativeControls
-							isLooping
-							shouldPlay={false}
-						/>
-					)}
 
 					<View
 						style={{
@@ -575,51 +651,40 @@ export default function RecordVideoScreen() {
 						}}
 					>
 						<TouchableOpacity
-							onPress={() => {
-								if (recordedVideoUri) {
-									console.log("✅ Video saved to logs:")
-									console.log("URI:", recordedVideoUri)
-									console.log("Duration (approx):", recordingTime, "seconds")
-
-									const timestamp = Date.now()
-									const filename = `${targetStudent.replace(
-										/[@.]/g,
-										"_"
-									)}_${timestamp}.mp4`
-
-									handleVideoUpload(
-										recordedVideoUri,
-										loggedInUserEmail, // uploadedBy
-										assignedCoachId, // assignedCoachId
-										filename,
-										targetStudent, // ✅ recordedFor
-										recordingTime, // durationSeconds
-										() => setShowPreview(false),
-										() => {}
-									)
-								}
-							}}
+							onPress={handleSubmitVideo}
+							disabled={isUploading || !videoTitle.trim() || !videoDescription.trim()}
 							style={{
-								backgroundColor: "rgba(255, 255, 255, 0.9)",
+								backgroundColor: (!videoTitle.trim() || !videoDescription.trim() || isUploading) 
+									? "rgba(128, 128, 128, 0.5)" 
+									: "rgba(0, 128, 0, 0.9)",
 								paddingHorizontal: 24,
 								paddingVertical: 12,
 								borderRadius: 25,
 								flexDirection: "row",
 								alignItems: "center",
+								opacity: (!videoTitle.trim() || !videoDescription.trim() || isUploading) ? 0.6 : 1,
 							}}
 						>
-							<Entypo name="check" size={20} color="green" />
+							{isUploading ? (
+								<ActivityIndicator size="small" color="white" />
+							) : (
+								<Entypo name="check" size={20} color="white" />
+							)}
 							<Text
-								style={{ color: "green", marginLeft: 8, fontWeight: "bold" }}
+								style={{ 
+									color: "white", 
+									marginLeft: 8, 
+									fontWeight: "bold",
+									fontSize: 16
+								}}
 							>
-								Done
+								{isUploading ? "Uploading..." : "Submit Video"}
 							</Text>
 						</TouchableOpacity>
 
 						<TouchableOpacity
-							onPress={() => {
-								setShowPreview(false)
-							}}
+							onPress={handleBackToRecord}
+							disabled={isUploading}
 							style={{
 								backgroundColor: "rgba(255, 0, 0, 0.9)",
 								paddingHorizontal: 24,
@@ -627,11 +692,12 @@ export default function RecordVideoScreen() {
 								borderRadius: 25,
 								flexDirection: "row",
 								alignItems: "center",
+								opacity: isUploading ? 0.6 : 1,
 							}}
 						>
 							<Entypo name="controller-record" size={20} color="white" />
 							<Text
-								style={{ color: "white", marginLeft: 8, fontWeight: "bold" }}
+								style={{ color: "white", marginLeft: 8, fontWeight: "bold", fontSize: 16 }}
 							>
 								Record Again
 							</Text>
@@ -658,3 +724,26 @@ const quickZoomTextStyle = {
 	fontSize: 14,
 	fontWeight: "bold" as const,
 }
+const modalHeaderStyles = StyleSheet.create({
+	header: {
+		backgroundColor: "#fff",
+		color: "#000",
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		paddingTop: 50,
+		paddingBottom: 12,
+		paddingHorizontal: 20,
+		position: "absolute" as const,
+		top: 0,
+		left: 0,
+		right: 0,
+		zIndex: 1,
+	},
+	title: {
+		color: "#1D4ED8",
+		fontSize: 20,
+		fontWeight: "600",
+		textAlign: "center",
+	},
+})
