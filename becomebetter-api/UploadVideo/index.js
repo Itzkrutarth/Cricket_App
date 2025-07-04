@@ -13,6 +13,8 @@ module.exports = async function (context, req) {
 		assignedCoachId, // always a coach
 		recordedFor, // NEW: student for whom video was recorded
 		durationSeconds,
+		title,
+		description
 	} = req.body
 
 	if (
@@ -65,6 +67,8 @@ module.exports = async function (context, req) {
 			durationSeconds,
 			feedbackStatus: "pending",
 			uploadedAt: new Date().toISOString(),
+			title,
+			description
 		}
 
 		await container.items.create(newItem, { partitionKey: uploadedBy })

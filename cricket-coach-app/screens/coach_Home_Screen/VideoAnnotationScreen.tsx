@@ -370,7 +370,7 @@ const VideoAnnotationScreen = () => {
             // Save logic: include all voiceNotes
             console.log("Saving annotations:", { annotations, voiceNotes });
             setHasChanges(false);
-            Alert.alert("Success", "Annotations saved successfully!");
+           // Alert.alert("Success", "Annotations saved successfully!");
             if (typeof taskId === "string") dispatch(markTaskCompleted(taskId));
             goToResultScreen(); // <-- redirect after save
           },
@@ -495,7 +495,7 @@ const VideoAnnotationScreen = () => {
       {/* Header */}
 
       <Header
-        title={`Annotate: ${title?.toString() || "Video"}`}
+        title={`Annotate Video`}//temporary static given
         playPauseButton={
           <TouchableOpacity onPress={toggleVideoPlayback}>
             <Ionicons

@@ -45,6 +45,8 @@ type UploadedVideo = {
 	feedbackStatus: string
 	uploadedAt: string
 	sasUrl?: string
+	title:string
+	description:string
 }
 
 const fetchedCoaches: { [key: string]: boolean } = {}
@@ -57,6 +59,8 @@ export default function CoachDetailsScreen() {
 	const studentId = useSelector((state: RootState) => state.user.id)
 	const coaches: Coach[] = params.coaches ? JSON.parse(params.coaches) : []
 	const coachId = params.id
+
+	
 
 	const fetchVideos = async () => {
 		setLoading(true)
@@ -110,6 +114,8 @@ export default function CoachDetailsScreen() {
 					{coaches.find((c) => c.id === params.id)?.specialization ||
 						"Not specified"}
 				</Text>
+				
+				<View>	
 				<Text style={styles.sectionTitle}>Sample Shots</Text>
 				<View style={styles.shotsContainer}>
 					{studentVideos.length === 0 ? (
@@ -134,8 +140,9 @@ export default function CoachDetailsScreen() {
 												pathname: "/coach-home/VideoPlayerScreen",
 												params: {
 													videoSource: video.sasUrl || video.videoUrl,
-													title: video.id,
+													title: video.title,
 													id: video.id,
+													description:video.description
 												},
 											})
 										}
@@ -157,7 +164,7 @@ export default function CoachDetailsScreen() {
 									<Text
 										style={{ fontSize: 12, marginTop: 4, textAlign: "center" }}
 									>
-										{new Date(video.uploadedAt).toLocaleDateString()} (
+										{video.title} (
 										{video.durationSeconds}s)
 									</Text>
 									<Text
@@ -193,6 +200,7 @@ export default function CoachDetailsScreen() {
 					<Entypo name="video-camera" size={24} color="#fff" />
 					<Text style={styles.recordButtonText}>Record Video</Text>
 				</TouchableOpacity>
+				</View>
 			</ScrollView>
 		</View>
 	)

@@ -8,6 +8,7 @@ type UserState = {
 	role: "Coach" | "Player" | ""
 	id: string
 	profilePicture: string
+
 }
 
 const initialState: UserState = {
@@ -17,6 +18,7 @@ const initialState: UserState = {
 	role: "",
 	id: "",
 	profilePicture: "",
+
 }
 
 const userSlice = createSlice({

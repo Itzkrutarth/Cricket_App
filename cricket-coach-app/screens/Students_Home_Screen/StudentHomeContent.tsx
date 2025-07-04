@@ -46,13 +46,14 @@ const StudentHomeContent = () => {
 		(state: RootState) => state.user.profilePicture
 	)
 
-	const [stats, setStats] = useState<StudentStats>({
-		myCoach: 2,
-		totalCoaches: 0,
-		sessions: 5,
-		videos: 9,
-		events: 7,
-	})
+	const [stats, setStats] = useState({
+	myCoach: 0,
+	totalCoaches: 0,
+	sessions: 0, // placeholder — keep your existing logic or add API later
+	videos: 0,
+	events: 0,   // optional if not using API yet
+})
+
 
 	// Calculate stats
 	const calculateStats = useCallback(() => {
@@ -133,7 +134,7 @@ const StudentHomeContent = () => {
 
 	const handleVideos = () => {
 		router.push({
-			pathname: "/student-home/coach-detail",
+			pathname: "/student-home/AllVideosScreen",
 			params: {
 				videos: JSON.stringify(videos),
 			},
