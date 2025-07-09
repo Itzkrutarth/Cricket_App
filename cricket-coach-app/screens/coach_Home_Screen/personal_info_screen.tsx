@@ -7,17 +7,17 @@ import Header from "./Header_1";
 
 const PersonalInfoScreen = () => {
   const [name, setName] = useState("Coach");
-  const [profilePictureUrl, setProfilePictureUrl] = useState("");
+  const [profilePicture, setProfilePicture] = useState("");
   const [role, setRole] = useState("Coach"); // Default fallback
 
   useEffect(() => {
     const loadUserData = async () => {
-      const storedName = await AsyncStorage.getItem("userName");
-      const storedProfile = await AsyncStorage.getItem("profilePictureUrl");
-      const storedRole = await AsyncStorage.getItem("userRole");
+      const storedName = await AsyncStorage.getItem("@userName");
+      const storedProfile = await AsyncStorage.getItem("@profilePicture");
+      const storedRole = await AsyncStorage.getItem("@userRole");
 
       if (storedName) setName(storedName);
-      if (storedProfile) setProfilePictureUrl(storedProfile);
+      if (storedProfile) setProfilePicture(storedProfile);
       if (storedRole) setRole(storedRole);
     };
     loadUserData();
@@ -33,8 +33,8 @@ const PersonalInfoScreen = () => {
         <View style={styles.profileSection}>
           <Image
             source={
-              profilePictureUrl
-                ? { uri: profilePictureUrl }
+              profilePicture
+                ? { uri: profilePicture }
                 : require("../../assets/images/boy.png")
             }
             style={styles.profileImage}
