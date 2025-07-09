@@ -3,7 +3,7 @@ import { Feather, MaterialIcons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { DrawerContentComponentProps } from "@react-navigation/drawer"
 import { router } from "expo-router"
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import {
 	Image,
 	Text,
@@ -12,6 +12,8 @@ import {
 	ScrollView,
 	ActivityIndicator,
 } from "react-native"
+import { useFocusEffect } from "@react-navigation/native"
+import { useCallback } from "react"
 
 const StudentDrawerContent: React.FC<DrawerContentComponentProps> = ({
 	navigation,
@@ -21,27 +23,55 @@ const StudentDrawerContent: React.FC<DrawerContentComponentProps> = ({
 	const [role, setRole] = useState("")
 	const [loading, setLoading] = useState(true)
 
-	useEffect(() => {
-		const loadUserData = async () => {
-			try {
-				const name = await AsyncStorage.getItem("@userName")
-				const photo = await AsyncStorage.getItem("@profilePicture")
-				const storedRole = await AsyncStorage.getItem("@role")
-				if (name) setUserName(name)
-				if (photo) setProfilePictureUrl(photo)
-				if (storedRole) setRole(storedRole)
-				console.log("StudentDrawer - role:", storedRole)
-			} catch (error) {
-				console.error("Error loading user data:", error)
-			} finally {
-				setLoading(false)
+	useFocusEffect(
+		useCallback(() => {
+			let isActive = true
+
+			const loadUserData = async () => {
+				try {
+					setLoading(true)
+
+					// Optional delay to ensure AsyncStorage is fully populated
+					await new Promise((resolve) => setTimeout(resolve, 300))
+
+					const name = await AsyncStorage.getItem("@userName")
+					const photo = await AsyncStorage.getItem("@profilePicture")
+					const storedRole = await AsyncStorage.getItem("@role")
+
+					if (isActive) {
+						console.log("StudentDrawer - Loaded:", {
+							name,
+							photo,
+							storedRole,
+						})
+						setUserName(name || "user")
+						setProfilePictureUrl(photo || "")
+						setRole(storedRole || "")
+					}
+				} catch (error) {
+					console.error("Error loading user data:", error)
+				} finally {
+					if (isActive) setLoading(false)
+				}
 			}
-		}
-		loadUserData()
-	}, [])
+
+			loadUserData()
+
+			return () => {
+				isActive = false
+			}
+		}, [])
+	)
 
 	const handleLogout = async () => {
 		await AsyncStorage.clear()
+
+		// Clear local state to prevent showing previous user
+		setUserName("user")
+		setProfilePictureUrl("")
+		setRole("")
+		setLoading(true)
+
 		router.replace("/signin")
 	}
 
