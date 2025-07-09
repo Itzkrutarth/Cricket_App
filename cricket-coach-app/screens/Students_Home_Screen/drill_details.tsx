@@ -1,7 +1,8 @@
 import React from "react"
-import { View, Text, TouchableOpacity } from "react-native"
+import { View, Text, TouchableOpacity, ScrollView } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import Header from "./Header_1"
+import { Feather } from "@expo/vector-icons"
 import { styles } from "@/styles/DrillsStyles"
 
 type DrillDetail = {
@@ -49,13 +50,9 @@ const drillDetails: Record<string, DrillDetail> = {
 }
 
 export default function DrillDetailsScreen() {
-	const { id, name } = useLocalSearchParams<{
-		id: string
-		name: string
-	}>()
-	const router = useRouter()
-
+	const { id } = useLocalSearchParams<{ id: string }>()
 	const drill = drillDetails[id as string]
+	const router = useRouter()
 
 	if (!drill) {
 		return (
@@ -68,43 +65,132 @@ export default function DrillDetailsScreen() {
 
 	return (
 		<View style={styles.container}>
-			<Header title={drill.name} />
-			<View style={styles.detailsContainer}>
-				<TouchableOpacity
-					style={styles.playButton}
-					onPress={() => console.log("Play drill video")}
-					accessibilityLabel={`Play ${drill.name} video`}
-					accessibilityRole="button"
+			<Header title="Drill Details" />
+
+			<ScrollView
+				contentContainerStyle={{
+					padding: 16,
+				}}
+			>
+				<View
+					style={{
+						backgroundColor: "#fff",
+						borderRadius: 12,
+						padding: 20,
+						marginBottom: 16,
+						shadowColor: "#000",
+						shadowOpacity: 0.1,
+						shadowRadius: 6,
+						elevation: 3,
+					}}
 				>
-					<Text style={styles.playButtonText}>▶ Play Drill</Text>
-				</TouchableOpacity>
-				<Text style={styles.detailText}>
-					Equipment needed: {drill.equipment}
-				</Text>
-				<Text style={styles.detailText}>Improves: {drill.improves}</Text>
-				<Text style={styles.detailText}>
-					Instructions: {drill.instructions}
-				</Text>
-				<Text style={styles.detailText}>Frequency: {drill.frequency}</Text>
-			</View>
-			<View style={styles.buttonContainer}>
-				<TouchableOpacity
-					style={styles.button}
-					onPress={() => console.log("Get directions")}
-					accessibilityLabel="Get directions to drill location"
-					accessibilityRole="button"
+					<Text
+						style={{
+							fontSize: 20,
+							fontWeight: "bold",
+							color: "#1D3557",
+							marginBottom: 10,
+							textAlign: "center",
+						}}
+					>
+						{drill.name}
+					</Text>
+
+					<TouchableOpacity
+						style={{
+							backgroundColor: "#4e73df",
+							padding: 12,
+							borderRadius: 8,
+							marginVertical: 10,
+							alignItems: "center",
+							flexDirection: "row",
+							justifyContent: "center",
+						}}
+						onPress={() => console.log("Play drill video")}
+					>
+						<Feather name="play-circle" size={18} color="#fff" />
+						<Text
+							style={{
+								color: "#fff",
+								marginLeft: 8,
+								fontWeight: "600",
+							}}
+						>
+							Play Drill
+						</Text>
+					</TouchableOpacity>
+
+					<Text style={styles.detailText}>
+						<Text style={{ fontWeight: "bold" }}>Equipment:</Text> {drill.equipment}
+					</Text>
+					<Text style={styles.detailText}>
+						<Text style={{ fontWeight: "bold" }}>Improves:</Text> {drill.improves}
+					</Text>
+					<Text style={styles.detailText}>
+						<Text style={{ fontWeight: "bold" }}>Instructions:</Text> {drill.instructions}
+					</Text>
+					<Text style={styles.detailText}>
+						<Text style={{ fontWeight: "bold" }}>Frequency:</Text> {drill.frequency}
+					</Text>
+				</View>
+
+				<View
+					style={{
+						flexDirection: "row",
+						justifyContent: "space-between",
+					}}
 				>
-					<Text style={styles.buttonText}>Get Directions</Text>
-				</TouchableOpacity>
-				<TouchableOpacity
-					style={styles.button}
-					onPress={() => console.log("Share drill")}
-					accessibilityLabel="Share drill"
-					accessibilityRole="button"
-				>
-					<Text style={styles.buttonText}>Share</Text>
-				</TouchableOpacity>
-			</View>
+					<TouchableOpacity
+						style={{
+							flex: 1,
+							backgroundColor: "#2563EB",
+							padding: 12,
+							borderRadius: 8,
+							alignItems: "center",
+							flexDirection: "row",
+							justifyContent: "center",
+							marginRight: 8,
+						}}
+						onPress={() => console.log("Get directions")}
+					>
+						<Feather name="map-pin" size={16} color="#fff" />
+						<Text
+							style={{
+								color: "#fff",
+								fontWeight: "600",
+								marginLeft: 6,
+							}}
+						>
+							Get Directions
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={{
+							flex: 1,
+							backgroundColor: "#7C3AED",
+							padding: 12,
+							borderRadius: 8,
+							alignItems: "center",
+							flexDirection: "row",
+							justifyContent: "center",
+							marginLeft: 8,
+						}}
+						onPress={() => console.log("Share drill")}
+					>
+						<Feather name="share-2" size={16} color="#fff" />
+						<Text
+							style={{
+								color: "#fff",
+								fontWeight: "600",
+								marginLeft: 6,
+							}}
+						>
+							Share
+						</Text>
+					</TouchableOpacity>
+				</View>
+			</ScrollView>
 		</View>
 	)
 }

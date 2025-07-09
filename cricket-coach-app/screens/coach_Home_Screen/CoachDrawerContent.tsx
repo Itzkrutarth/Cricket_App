@@ -63,7 +63,7 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 				</TouchableOpacity>
 			</View>
 			<TouchableOpacity onPress={() => handleHome()} style={styles.menuItem}>
-				<Feather name="user" size={20} color="#1D4ED8" />
+				<Feather name="home" size={20} color="#1D4ED8" />
 				<Text style={styles.menuText}>Home</Text>
 			</TouchableOpacity>
 

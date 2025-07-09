@@ -95,11 +95,11 @@ const VideoAnnotationScreen = () => {
   const [selectedFrameIndex, setSelectedFrameIndex] = useState(0);
   const [isFrameScrolling, setIsFrameScrolling] = useState(false);
 
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [voiceNotes, setVoiceNotes] = useState<{ [frame: number]: string }>(
-    {}
-  );
-  const [isRecording, setIsRecording] = useState(false);
+  // const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  // const [voiceNotes, setVoiceNotes] = useState<{ [frame: number]: string }>(
+  //   {}
+  // );
+  // const [isRecording, setIsRecording] = useState(false);
 
   const dispatch = useDispatch();
   const { title, videoSource, taskId } = params;
@@ -368,7 +368,7 @@ const VideoAnnotationScreen = () => {
           text: "Save",
           onPress: () => {
             // Save logic: include all voiceNotes
-            console.log("Saving annotations:", { annotations, voiceNotes });
+            // console.log("Saving annotations:", { annotations, voiceNotes });
             setHasChanges(false);
            // Alert.alert("Success", "Annotations saved successfully!");
             if (typeof taskId === "string") dispatch(markTaskCompleted(taskId));
@@ -444,36 +444,36 @@ const VideoAnnotationScreen = () => {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      await Audio.requestPermissionsAsync();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      setRecording(recording);
-      setIsRecording(true);
-    } catch (err) {
-      Alert.alert("Error", "Failed to start recording.");
-    }
-  };
+  // const startRecording = async () => {
+  //   try {
+  //     await Audio.requestPermissionsAsync();
+  //     await Audio.setAudioModeAsync({
+  //       allowsRecordingIOS: true,
+  //       playsInSilentModeIOS: true,
+  //     });
+  //     const { recording } = await Audio.Recording.createAsync(
+  //       Audio.RecordingOptionsPresets.HIGH_QUALITY
+  //     );
+  //     setRecording(recording);
+  //     setIsRecording(true);
+  //   } catch (err) {
+  //     Alert.alert("Error", "Failed to start recording.");
+  //   }
+  // };
 
-  const stopRecording = async () => {
-    try {
-      if (!recording) return;
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-      const frame = getCurrentFrameTimestamp();
-      setVoiceNotes((prev) => ({ ...prev, [frame]: uri || "" }));
-      setRecording(null);
-      setIsRecording(false);
-    } catch (err) {
-      Alert.alert("Error", "Failed to stop recording.");
-    }
-  };
+  // const stopRecording = async () => {
+  //   try {
+  //     if (!recording) return;
+  //     await recording.stopAndUnloadAsync();
+  //     const uri = recording.getURI();
+  //     const frame = getCurrentFrameTimestamp();
+  //     // setVoiceNotes((prev) => ({ ...prev, [frame]: uri || "" }));
+  //     setRecording(null);
+  //     setIsRecording(false);
+  //   } catch (err) {
+  //     Alert.alert("Error", "Failed to stop recording.");
+  //   }
+  // };
 
   const goToResultScreen = () => {
     router.push({
@@ -483,7 +483,7 @@ const VideoAnnotationScreen = () => {
         videoThumbnail: typeof videoSource === "string" ? videoSource : "", // or a generated thumbnail
         textNotes: "", // replace with your text notes variable if you have one
         drills: [], // replace with your drills array if you have one
-        voiceNoteUri: voiceNotes[0] || "", // or pass all voiceNotes if needed
+        // voiceNoteUri: voiceNotes[0] || "", // or pass all voiceNotes if needed
       },
     });
   };
@@ -861,7 +861,7 @@ const VideoAnnotationScreen = () => {
         </View>
  <View style={styles.toolsRow}>
           {/* Recording Tools */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.toolButton, styles.actionButton]}
             onPress={isRecording ? stopRecording : startRecording}
           >
@@ -873,8 +873,8 @@ const VideoAnnotationScreen = () => {
             <Text style={styles.toolLabel}>
               {isRecording ? "Stop" : "Record"}
             </Text>
-          </TouchableOpacity>
-          {voiceNotes[getCurrentFrameTimestamp()] && (
+          </TouchableOpacity> */}
+          {/* {voiceNotes[getCurrentFrameTimestamp()] && (
             <TouchableOpacity
               style={[styles.toolButton, styles.actionButton]}
               onPress={async () => {
@@ -887,7 +887,7 @@ const VideoAnnotationScreen = () => {
               <Ionicons name="play" size={24} color="#FFD700" />
               <Text style={styles.toolLabel}>Play Note</Text>
             </TouchableOpacity>
-          )}
+          )} */}
         </View>
         <View style={styles.toolsRow}>
           {/* Action Tools */}
