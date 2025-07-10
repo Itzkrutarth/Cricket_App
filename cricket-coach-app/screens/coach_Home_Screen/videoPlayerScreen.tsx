@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react"
 import { View, Text, Dimensions, StatusBar, StyleSheet } from "react-native"
-import { Video, ResizeMode ,AVPlaybackStatus} from "expo-av"
+import { Video, ResizeMode, AVPlaybackStatus } from "expo-av"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import Header from "./Header_1"
@@ -10,20 +10,18 @@ const { width, height } = Dimensions.get("window")
 const VideoPlayerScreen = () => {
 	const router = useRouter()
 	const params = useLocalSearchParams()
-const [status, setStatus] = useState<AVPlaybackStatus | null>(null)
+	const [status, setStatus] = useState<AVPlaybackStatus | null>(null)
 
 	const videoRef = useRef<Video>(null) // Added ref
 
-	const { title, description,videoSource } = params
-
+	const { title, description, videoSource, id, studentId } = params
 
 	const getVideoSource = () => {
-	if (typeof videoSource === "string" && videoSource.startsWith("https")) {
-		return { uri: videoSource }
+		if (typeof videoSource === "string" && videoSource.startsWith("https")) {
+			return { uri: videoSource }
+		}
+		return require("../../assets/videos/jay.mp4") // fallback
 	}
-	return require("../../assets/videos/jay.mp4") // fallback
-}
-
 
 	const handleEditPress = async () => {
 		// Pause video
@@ -42,6 +40,8 @@ const [status, setStatus] = useState<AVPlaybackStatus | null>(null)
 			params: {
 				title: title?.toString() || "Video",
 				videoSource: secureUrl,
+				videoId: id,
+				studentId: studentId,
 			},
 		})
 	}
@@ -50,50 +50,44 @@ const [status, setStatus] = useState<AVPlaybackStatus | null>(null)
 		<View style={styles.container}>
 			<StatusBar hidden />
 			<Header
-				title={"Video"}//temporary static given
+				title={"Video"} //temporary static given
 				onEditPress={handleEditPress}
 			/>
-
 
 			{/* Video */}
 			<View style={styles.videoContainer}>
 				<Video
-  ref={videoRef}
-  key={Array.isArray(params.id) ? params.id[0] : params.id}
-  source={{ uri: videoSource }}
-  style={styles.video}
-  useNativeControls
-  resizeMode={ResizeMode.CONTAIN}
-  isMuted={false}
-  shouldPlay={true}
-  onLoad={() => {
-  console.log("✅ Video loaded");
-  setTimeout(() => {
-    if (videoRef.current) {
-      videoRef.current
-        .setStatusAsync({ shouldPlay: true, rate: 1 })
-        .catch((err) => console.error("❌ setStatusAsync error", err));
-    }
-  }, 200);
-}}
-
-
-  onPlaybackStatusUpdate={(status) => {
-    console.log("🎬 Status", status);
-  }}
-  onError={(e) => {
-    console.error("❌ Error playing video", e);
-  }}
-/>
-
+					ref={videoRef}
+					key={Array.isArray(params.id) ? params.id[0] : params.id}
+					source={{ uri: videoSource }}
+					style={styles.video}
+					useNativeControls
+					resizeMode={ResizeMode.CONTAIN}
+					isMuted={false}
+					shouldPlay={true}
+					onLoad={() => {
+						console.log("✅ Video loaded")
+						setTimeout(() => {
+							if (videoRef.current) {
+								videoRef.current
+									.setStatusAsync({ shouldPlay: true, rate: 1 })
+									.catch((err) => console.error("❌ setStatusAsync error", err))
+							}
+						}, 200)
+					}}
+					onPlaybackStatusUpdate={(status) => {
+						console.log("🎬 Status", status)
+					}}
+					onError={(e) => {
+						console.error("❌ Error playing video", e)
+					}}
+				/>
 			</View>
 
 			{/* Info */}
 			<View style={styles.infoSection}>
 				<Text style={styles.videoTitle}>{title}</Text>
-				<Text style={styles.videoDescription}>
-					{description}
-				</Text>
+				<Text style={styles.videoDescription}>{description}</Text>
 			</View>
 		</View>
 	)
