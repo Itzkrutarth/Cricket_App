@@ -28,7 +28,9 @@ import {
 } from "../../app/student-home/CoachData"
 import { useSelector } from "react-redux"
 import { RootState } from "@/store/store"
-
+export interface StudentStats{
+	
+}
 const StudentHomeContent = () => {
 	const params = useLocalSearchParams()
 	const [coachCount, setCoachCount] = useState(0)

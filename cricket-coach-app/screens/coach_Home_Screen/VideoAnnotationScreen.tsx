@@ -356,28 +356,57 @@ const VideoAnnotationScreen = () => {
   };
 
   // Save functionality
-  const saveAnnotations = () => {
-    Alert.alert(
-      "Save Annotations",
-      `Save ${annotations.length} annotations across ${
-        videoFrames.filter((f) => f.annotationCount > 0).length
-      } frames?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Save",
-          onPress: () => {
-            // Save logic: include all voiceNotes
-            // console.log("Saving annotations:", { annotations, voiceNotes });
-            setHasChanges(false);
-           // Alert.alert("Success", "Annotations saved successfully!");
-            if (typeof taskId === "string") dispatch(markTaskCompleted(taskId));
-            goToResultScreen(); // <-- redirect after save
-          },
+ const saveAnnotations = async () => {
+  Alert.alert(
+    "Save Annotations",
+    `Save ${annotations.length} annotations across ${
+      videoFrames.filter((f) => f.annotationCount > 0).length
+    } frames?`,
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Save",
+        onPress: async () => {
+          try {
+            const annotationData = {
+              annotations: { annotations }, // Wrap in object
+              videoId: typeof params.videoId === "string" ? params.videoId : `vid-${Date.now()}`,
+              recordedFor: typeof params.recordedFor === "string" ? params.recordedFor : "student@example.com",
+              uploadedBy: typeof params.uploadedBy === "string" ? params.uploadedBy : "coach@example.com",
+              assignedCoachId: typeof params.assignedCoachId === "string" ? params.assignedCoachId : "coach@example.com",
+              title: typeof params.title === "string" ? params.title : "Untitled Session",
+              description: typeof params.description === "string" ? params.description : "Annotated session",
+            };
+
+            const response = await fetch("https://becomebetter-api.azurewebsites.net/api/uploadAnnotation?", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(annotationData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+              Alert.alert("Success", "Annotations saved successfully!");
+              setHasChanges(false);
+              if (typeof taskId === "string") dispatch(markTaskCompleted(taskId));
+              goToResultScreen();
+            } else {
+              console.error("Upload failed:", result);
+              Alert.alert("Error", result.body || "Failed to upload annotations");
+            }
+          } catch (error) {
+            console.error("Upload error:", error);
+            Alert.alert("Error", "An unexpected error occurred.");
+          }
         },
-      ]
-    );
-  };
+      },
+    ]
+  );
+};
+
 
   // Video controls
   const toggleVideoPlayback = async () => {

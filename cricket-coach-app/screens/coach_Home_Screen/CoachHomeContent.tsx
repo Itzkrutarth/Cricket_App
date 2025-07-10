@@ -595,7 +595,6 @@ const HomeContent = () => {
 				</TouchableOpacity>
 				<TouchableOpacity
 					style={[styles.statBox, styles.greenBox]}
-					c
 				>
 					<Feather name="check-square" size={24} color="#fff" />
 					<Text style={styles.statLabel}>Tasks</Text>
