@@ -1,17 +1,18 @@
 {
   "bindings": [
     {
-      "authLevel": "function",
+      "authLevel": "anonymous",
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["put"],
-      "route": "RemoveCoachFromStudent"
+      "methods": ["get"],
+      "route": "GetUserById"
     },
     {
       "type": "http",
       "direction": "out",
       "name": "res"
     }
-  ]
+  ],
+  "scriptFile": "index.js"
 }

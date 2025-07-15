@@ -19,7 +19,7 @@ import {
 	Coach,
 	Event,
 	Video,
-	StudentStats,
+	//StudentStats,
 	dummyCoaches,
 	dummyCoachRequests,
 	dummyEvents,
@@ -28,20 +28,26 @@ import {
 } from "../../app/student-home/CoachData"
 import { useSelector } from "react-redux"
 import { RootState } from "@/store/store"
-export interface StudentStats{
+// export interface StudentStats{
 	
-}
+// }
 const StudentHomeContent = () => {
 	const params = useLocalSearchParams()
 	const [coachCount, setCoachCount] = useState(0)
 	const [selectedRequest, setSelectedRequest] = useState<Coach | null>(null)
-	const [coaches, setCoaches] = useState<Coach[]>(dummyCoaches)
-	const [coachRequests, setCoachRequests] =
-		useState<Coach[]>(dummyCoachRequests)
+	const [coaches, setCoaches] = useState<Coach[]>([])
+	const [coachRequests, setCoachRequests] = useState<Coach[]>([])
 	const [events, setEvents] = useState<Event[]>(dummyEvents)
-	const [videos, setVideos] = useState<Video[]>(dummyVideos)
+	const [videos, setVideos] = useState<Video[]>([]) // ✅ start empty
+
 	const [refreshing, setRefreshing] = useState(false)
 	const [loading, setLoading] = useState(true)
+	const studentId = useSelector((state: RootState) => state.user.id)
+	const user = useSelector((state: RootState) => state.user)
+	const [myCoachCount, setMyCoachCount] = useState(0)
+
+
+
 
 	const studentName = useSelector((state: RootState) => state.user.name)
 	const profileUrl = useSelector(
@@ -57,40 +63,194 @@ const StudentHomeContent = () => {
 })
 
 
-	// Calculate stats
-	const calculateStats = useCallback(() => {
-		const myCoach = coaches.filter((c) => c.isMyCoach).length
-		const totalCoaches = coaches.length
-		const upcomingEvents = events.filter(
-			(e) => new Date(e.date) >= new Date()
-		).length
+	const calculateStats = useCallback((freshCoachCount: number, freshMyCoachCount: number, freshVideos: any[]) => {
+	const upcomingEvents = events.filter((e) => new Date(e.date) >= new Date()).length
 
-		setStats({
-			myCoach,
-			totalCoaches,
-			sessions: upcomingEvents,
-			videos: videos.length,
-			events: events.length,
-		})
-	}, [coaches, events, videos])
+	console.log("📊 Calculating stats with:", {
+		coachCount: freshCoachCount,
+		myCoachCount: freshMyCoachCount,
+		videoCount: freshVideos.length,
+		eventCount: events.length,
+	})
 
-	useEffect(() => {
-		const fetchCoachCount = async () => {
-			try {
-				const response = await fetch(
-					"https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Coach"
-				)
-				const data = await response.json()
-				setCoachCount(data.length || 0)
-			} catch (err) {
-				console.error("❌ Failed to load coach count", err)
-			} finally {
-				setLoading(false) // ✅ make sure loading stops
-			}
+	setStats((prev) => ({
+		...prev,
+		myCoach: freshMyCoachCount,
+		totalCoaches: freshCoachCount,
+		sessions: upcomingEvents,
+		videos: freshVideos.length,
+		events: events.length,
+	}))
+}, [events])
+
+
+
+
+
+	const fetchAssignedCoaches = async () => {
+	try {
+		const response = await fetch(
+			"https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Coach"
+		)
+		if (!response.ok) throw new Error("Failed to fetch coaches")
+
+		const data = await response.json()
+		
+
+		// Make sure studentId exists
+		if (!studentId) {
+			console.warn("⚠️ studentId is undefined")
+			return
 		}
 
-		fetchCoachCount()
-	}, [])
+		const assigned = data.filter((coach: any) =>
+			coach.students?.includes(studentId)
+		)
+
+		
+
+		const formatted = assigned.map((coach: any) => ({
+			id: coach.id,
+			name: coach.name,
+			profileUrl: coach.profilePicture,
+			specialization: coach.description,
+			rating: coach.rating || 5,
+			experience: coach.experience || "3 years",
+			bio: coach.description || "",
+			isMyCoach: true,
+			joinDate: "2025-07-01",
+		}))
+
+// 		setCoaches(formatted)
+// 		setStats((prev) => ({
+// 	...prev,
+	
+// }))
+	} catch (err) {
+		console.error("❌ Failed to fetch assigned coaches", err)
+	}
+}
+const fetchStudentVideos = async () => {
+	try {
+		const email = user?.email
+		if (!email) return []
+
+		const response = await fetch(
+			`https://becomebetter-api.azurewebsites.net/api/GetVideosForStudent?studentEmail=${encodeURIComponent(email)}`
+		)
+		if (!response.ok) return []
+
+		const data = await response.json()
+		const formatted = data.map((v: any) => ({
+			id: v.id,
+			title: v.title || "Practice Video",
+			thumbnail: "https://via.placeholder.com/400x225.png?text=Video",
+			duration: "00:00",
+			uploadDate: new Date().toISOString(),
+			category: v.type || "batting",
+			coachId: v.assignedCoachId,
+		}))
+		return formatted
+	} catch (err) {
+		console.error("❌ Error fetching videos", err)
+		return []
+	}
+}
+
+
+
+
+
+
+const fetchCoachCount = async () => {
+	try {
+		const response = await fetch("https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Coach")
+		const data = await response.json()
+		return data.length || 0
+	} catch (err) {
+		console.error("❌ Failed to load coach count", err)
+		return 0
+	}
+}
+
+
+const fetchMyCoachCount = async () => {
+	try {
+		const studentId = user?.id
+		const token = user?.token
+		if (!studentId || !token) return 0
+
+		const response = await fetch(
+			`https://becomebetter-api.azurewebsites.net/api/GetUserById?id=${studentId}`,
+			{
+				method: "GET",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+			}
+		)
+		const data = await response.json()
+		const count = data.coaches?.length || 0
+		return count
+	} catch (err) {
+		console.error("❌ Failed to fetch my coach count", err)
+		return 0
+	}
+}
+
+
+
+
+
+	useEffect(() => {
+	if (!user?.id) return
+
+	const init = async () => {
+	try {
+		const [coachData, myCoachCount, assignedCoaches, videoData] = await Promise.all([
+			fetchCoachCount(),
+			fetchMyCoachCount(),
+			fetchAssignedCoaches(),
+			fetchStudentVideos(),
+		])
+
+		console.log("✅ All data fetched:", {
+			coachCount: coachData,
+			myCoachCount,
+			videoCount: videoData?.length || 0,
+		})
+
+		setCoachCount(coachData)
+		setMyCoachCount(myCoachCount)
+		setVideos(videoData)
+
+		// ✅ Use latest values directly
+		calculateStats(coachData, myCoachCount, videoData)
+	} catch (e) {
+		console.error("Init error:", e)
+	} finally {
+		setLoading(false)
+	}
+}
+
+
+	init()
+}, [user])
+
+
+
+
+// useEffect(() => {
+// 	if (user?.id) {
+// 		calculateStats()
+// 	}
+// }, [myCoachCount, coachCount, videos, events])
+
+
+
+
+
 
 	const onRefresh = useCallback(async () => {
 		setRefreshing(true)
@@ -259,6 +419,7 @@ const StudentHomeContent = () => {
 					<Feather name="user" size={24} color="#fff" />
 					<Text style={styles.statLabel}>My Coach</Text>
 					<Text style={styles.statValue}>{stats.myCoach}</Text>
+
 				</TouchableOpacity>
 
 				<TouchableOpacity

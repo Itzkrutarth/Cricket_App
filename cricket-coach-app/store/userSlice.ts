@@ -8,6 +8,7 @@ type UserState = {
 	role: "Coach" | "Player" | ""
 	id: string
 	profilePicture: string
+	coaches: string[]
 
 }
 
@@ -18,6 +19,7 @@ const initialState: UserState = {
 	role: "",
 	id: "",
 	profilePicture: "",
+	coaches: [],
 
 }
 
