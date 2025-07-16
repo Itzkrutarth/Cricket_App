@@ -20,11 +20,13 @@ import { useRouter, useLocalSearchParams } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import Svg, { Path, Text as SvgText, Circle } from "react-native-svg"
 import { styles } from "@/styles/VideoAnnotationEditor"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { markTaskCompleted } from "@/store/taskSlice"
 import Header from "./Header_1"
 import { Audio } from "expo-av"
 import * as FileSystem from "expo-file-system"
+import { RootState } from "@/store/store"
+
 // Type definitions
 interface DrawingAnnotation {
 	id: number
@@ -94,9 +96,10 @@ const VideoAnnotationScreen = () => {
 
 	const [selectedFrameIndex, setSelectedFrameIndex] = useState(0)
 	const [isFrameScrolling, setIsFrameScrolling] = useState(false)
-
+ const coachId = useSelector((state: RootState) => state.user.email);
 	const dispatch = useDispatch()
-	const { title, videoSource, taskId, videoId, studentId } = params
+	const { title, videoSource, taskId, videoId, studentId } = params;
+   const { annotationUrl } = useLocalSearchParams();
 	// Video frames state - Generate frames for smooth scrubbing
 	const [videoFrames, setVideoFrames] = useState<VideoFrame[]>(() => {
 		const frames = []
@@ -350,28 +353,82 @@ const VideoAnnotationScreen = () => {
 	}
 
 	// Save functionality
-	const saveAnnotations = () => {
-		Alert.alert(
-			"Save Annotations",
-			`Save ${annotations.length} annotations across ${
-				videoFrames.filter((f) => f.annotationCount > 0).length
-			} frames?`,
-			[
-				{ text: "Cancel", style: "cancel" },
-				{
-					text: "Save",
-					onPress: () => {
-						// Save logic: include all voiceNotes
-						// console.log("Saving annotations:", { annotations, voiceNotes });
-						setHasChanges(false)
-						// Alert.alert("Success", "Annotations saved successfully!");
-						if (typeof taskId === "string") dispatch(markTaskCompleted(taskId))
-						goToResultScreen() // <-- redirect after save
-					},
-				},
-			]
-		)
-	}
+	 const saveAnnotations = async () => {
+  console.log("🧪 Incoming annotationUrl param:", annotationUrl);
+
+  Alert.alert(
+    "Save Annotations",
+    `Save ${annotations.length} annotations across ${
+      videoFrames.filter((f) => f.annotationCount > 0).length
+    } frames?`,
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Save",
+        onPress: async () => {
+          try {
+            const annotationData = {
+              annotations, // ✅ FIXED: Pass array directly
+              videoId:
+                typeof params.videoId === "string"
+                  ? params.videoId
+                  : `vid-${Date.now()}`,
+              videoUrl:
+                typeof videoSource === "string" ? videoSource : "",
+              recordedFor:
+                typeof studentId === "string"
+                  ? studentId
+                  : "student@example.com",
+              uploadedBy: coachId ?? "coach@example.com",
+              assignedCoachId: coachId ?? "coach@example.com",
+              title:
+                typeof params.title === "string"
+                  ? params.title
+                  : "Untitled Session",
+              description:
+                typeof params.description === "string"
+                  ? params.description
+                  : "Annotated session",
+            };
+
+            // 🔍 Debug log before sending
+            console.log("📤 Upload payload", annotationData);
+
+            const response = await fetch(
+              "https://becomebetter-api.azurewebsites.net/api/uploadAnnotation?",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(annotationData),
+              }
+            );
+
+            const result = await response.json();
+
+            if (response.ok) {
+              Alert.alert("Success", "Annotations saved successfully!");
+              setHasChanges(false);
+              if (typeof taskId === "string")
+                dispatch(markTaskCompleted(taskId));
+              goToResultScreen();
+            } else {
+              console.error("Upload failed:", result);
+              Alert.alert(
+                "Error",
+                result.body || "Failed to upload annotations"
+              );
+            }
+          } catch (error) {
+            console.error("Upload error:", error);
+            Alert.alert("Error", "An unexpected error occurred.");
+          }
+        },
+      },
+    ]
+  );
+};
 
 	// Video controls
 	const toggleVideoPlayback = async () => {

@@ -67,6 +67,7 @@ export default function StudentDetail() {
         title: video.title || video.id || "Untitled Video",
         id: video.id,
         description: video.description || "No description available",
+        studentId: video.recordedFor, // Ensure this is the correct field
       },
     });
   };

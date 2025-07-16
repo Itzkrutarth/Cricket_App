@@ -1,93 +1,166 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react";
 import {
-	View,
-	Text,
-	Image,
-	ScrollView,
-	TouchableOpacity,
-	ActivityIndicator,
-} from "react-native"
-import { useLocalSearchParams, useRouter } from "expo-router"
-import Header from "./Header_1"
-import { styles } from "../../styles/student_details"
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  StatusBar,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import Header from "./Header_1";
+import { styles } from "../../styles/student_details";
 
+// Annotated video type
 type AnnotatedVideo = {
-	videoId: string
-	videoThumbnail: string
-	sessionTitle: string
-	videoUri: string
-}
+  id: string;
+  videoId: string;
+  annotationUrl: string;
+  videoUrl: string;
+  recordedFor: string;
+  uploadedBy: string;
+  assignedCoachId: string;
+  uploadedAt: string;
+  title: string;
+  description: string;
+  annotations?: any;
+  annotationError?: string;
+};
 
 export default function AnnotatedVideosScreen() {
-	const { studentId } = useLocalSearchParams()
-	const router = useRouter()
-	const [videos, setVideos] = useState<AnnotatedVideo[]>([])
-	const [loading, setLoading] = useState(true)
+  const { studentId } = useLocalSearchParams();
+  const router = useRouter();
+  const [videos, setVideos] = useState<AnnotatedVideo[]>([]);
+  const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		const fetchVideos = async () => {
-			try {
-				const res = await fetch(
-					`https://<your-api>.azurewebsites.net/api/GetAnnotatedVideos?studentId=${studentId}`
-				)
-				const data = await res.json()
-				setVideos(data || [])
-			} catch (err) {
-				console.error("Error loading videos:", err)
-			} finally {
-				setLoading(false)
-			}
-		}
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const res = await fetch(
+          `https://becomebetter-api.azurewebsites.net/api/getAnnotationsByStudent?studentEmail=${studentId}`
+        );
+        const data = await res.json();
 
-		fetchVideos()
-	}, [studentId])
+        const videosWithAnnotations = await Promise.all(
+          (data || []).map(async (video: AnnotatedVideo) => {
+            try {
+              if (video.annotationUrl) {
+                const annotationRes = await fetch(video.annotationUrl);
+                if (!annotationRes.ok) {
+                  return { ...video, annotationError: `(${annotationRes.status})` };
+                }
 
-	return (
-		<View style={styles.container}>
-			<Header title="Annotated Videos" />
-			<ScrollView style={styles.scrollContent}>
-				<Text style={styles.sectionTitle}>Videos with Annotations</Text>
+                const text = await annotationRes.text();
+                if (text.trim().startsWith("<")) {
+                  return { ...video, annotationError: "Invalid format" };
+                }
 
-				{loading ? (
-					<ActivityIndicator size="large" color="#1D4ED8" />
-				) : videos.length === 0 ? (
-					<Text style={{ textAlign: "center", marginTop: 20 }}>
-						No annotated videos yet.
-					</Text>
-				) : (
-					<View style={styles.videoGrid}>
-						{videos.map((video, index) => (
-							<TouchableOpacity
-								key={index}
-								onPress={() =>
-									router.push({
-										pathname: "/student-home/VideoPlayerScreen",
-										params: {
-											videoId: video.videoId,
-											videoUri: video.videoUri,
-											studentId,
-										},
-									})
-								}
-							>
-								<Image
-									source={{ uri: video.videoThumbnail }}
-									style={styles.videoThumbnail}
-									resizeMode="cover"
-								/>
-								<Text style={styles.videoLabel}>{video.sessionTitle}</Text>
-							</TouchableOpacity>
-						))}
-					</View>
-				)}
+                const parsed = JSON.parse(text);
+                const annotations = parsed.annotations || parsed;
 
-				<TouchableOpacity
-					style={styles.recordButton}
-					onPress={() => router.back()}
-				>
-					<Text style={styles.recordButtonText}>Back</Text>
-				</TouchableOpacity>
-			</ScrollView>
-		</View>
-	)
+                return { ...video, annotations };
+              }
+              return video;
+            } catch (err) {
+              return { ...video, annotationError: "Load failed" };
+            }
+          })
+        );
+
+        setVideos(videosWithAnnotations);
+      } catch (err) {
+        console.error("Error loading videos:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (studentId) fetchVideos();
+  }, [studentId]);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
+      <StatusBar hidden />
+      <Header title="Annotated Videos" />
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Annotated Sessions</Text>
+
+        {loading ? (
+          <ActivityIndicator size="large" color="#1D4ED8" />
+        ) : videos.length === 0 ? (
+          <Text style={{ textAlign: "center", color: "#999", marginTop: 32 }}>
+            No annotated videos available.
+          </Text>
+        ) : (
+          videos.map((video, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() =>
+                router.push({
+                  pathname: "/coach-home/vp",
+                  params: {
+                    videoSource: video.videoUrl ?? video.annotationUrl,
+                    title: video.title,
+                    id: video.videoId,
+                    description: video.description,
+                    studentId: video.recordedFor,
+                    annotations: JSON.stringify(video.annotations || []),
+                    hasAnnotations: video.annotations ? "true" : "false",
+                  },
+                })
+              }
+              style={{
+                backgroundColor: "#1a1a1a",
+                padding: 12,
+                borderRadius: 12,
+                marginBottom: 20,
+                elevation: 2,
+              }}
+            >
+              <Image
+                source={{
+                  uri: "https://img.icons8.com/fluency/240/video-playlist.png",
+                }}
+                style={{
+                  width: "100%",
+                  height: 180,
+                  borderRadius: 10,
+                  marginBottom: 10,
+                }}
+                resizeMode="cover"
+              />
+
+              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "bold" }}>
+                {video.title}
+              </Text>
+              <Text style={{ color: "#ccc", fontSize: 13, marginTop: 2 }}>
+                {video.description}
+              </Text>
+              <Text style={{ color: "#777", fontSize: 11, marginTop: 4 }}>
+                Uploaded: {new Date(video.uploadedAt).toLocaleString()}
+              </Text>
+
+              {video.annotations ? (
+                <Text style={{ color: "#FFD700", fontSize: 11, marginTop: 4 }}>
+                  {video.annotations.length} annotations
+                </Text>
+              ) : video.annotationError ? (
+                <Text style={{ color: "#FF6B6B", fontSize: 11, marginTop: 4 }}>
+                  Annotations unavailable: {video.annotationError}
+                </Text>
+              ) : null}
+            </TouchableOpacity>
+          ))
+        )}
+
+        <TouchableOpacity
+          style={[styles.recordButton, { marginTop: 20 }]}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.recordButtonText}>Back</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  );
 }
