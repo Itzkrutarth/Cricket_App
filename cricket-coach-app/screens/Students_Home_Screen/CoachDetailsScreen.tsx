@@ -211,6 +211,7 @@ export default function CoachDetailsScreen() {
                 pathname: "/coach-home/SavedVideo",
                 params: {
                   studentId: studentId,
+                  coachId: coachId,
                   videos: JSON.stringify(coachVideos),
                 },
               })
@@ -223,9 +224,17 @@ export default function CoachDetailsScreen() {
           <TouchableOpacity
             style={[styles.actionButton, styles.annotatedButton]}
             onPress={() =>
-              router.push(`/coach-home/AnnotatedVideos?studentId=${studentId}`)
+               router.push({
+                pathname: "/student-home/annotatedVideo",
+                params: {
+                  studentId: studentId,
+                  coachId: coachId,
+                  videos: JSON.stringify(coachVideos),
+                },
+              })
             }
-          >
+            >
+            
             <Feather name="edit-3" size={16} color="#fff" />
             <Text style={styles.actionText}>Annotated Videos</Text>
           </TouchableOpacity>
