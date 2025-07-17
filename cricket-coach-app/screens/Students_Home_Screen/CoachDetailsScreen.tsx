@@ -125,9 +125,14 @@ export default function CoachDetailsScreen() {
       >
         {/* Coach Card */}
         <View style={styles.card}>
-          <Image source={{ uri: params.photoUrl }} style={styles.profileImage} />
+          <Image
+            source={{ uri: params.photoUrl }}
+            style={styles.profileImage}
+          />
           <Text style={styles.name}>{params.name}</Text>
-          <Text style={styles.role}>{coach?.specialization || "Specialist"}</Text>
+          <Text style={styles.role}>
+            {coach?.specialization || "Specialist"}
+          </Text>
         </View>
 
         {/* Experience / Summary */}
@@ -224,17 +229,15 @@ export default function CoachDetailsScreen() {
           <TouchableOpacity
             style={[styles.actionButton, styles.annotatedButton]}
             onPress={() =>
-               router.push({
-                pathname: "/student-home/annotatedVideo",
+              router.push({
+                pathname: "/coach-home/AnnotatedVideos",
                 params: {
                   studentId: studentId,
-                  coachId: coachId,
-                  videos: JSON.stringify(coachVideos),
+                  coachEmail: coachId,
                 },
               })
             }
-            >
-            
+          >
             <Feather name="edit-3" size={16} color="#fff" />
             <Text style={styles.actionText}>Annotated Videos</Text>
           </TouchableOpacity>

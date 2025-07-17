@@ -205,7 +205,13 @@ export default function StudentDetail() {
               <TouchableOpacity
                 style={[styles.actionButton, styles.annotatedButton]}
                 onPress={() =>
-                  router.push(`/coach-home/AnnotatedVideos?studentId=${id}`)
+                  router.push({
+                    pathname: "/coach-home/AnnotatedVideos",
+                    params: {
+                      studentId: email,
+                      coachEmail: coachEmail,
+                    },
+                  })
                 }
               >
                 <Feather name="edit-3" size={16} color="#fff" />

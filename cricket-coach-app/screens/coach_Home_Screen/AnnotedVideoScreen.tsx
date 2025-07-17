@@ -29,7 +29,7 @@ type AnnotatedVideo = {
 };
 
 export default function AnnotatedVideosScreen() {
-  const { studentId } = useLocalSearchParams();
+  const { studentId, coachEmail } = useLocalSearchParams();
   const router = useRouter();
   const [videos, setVideos] = useState<AnnotatedVideo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export default function AnnotatedVideosScreen() {
     const fetchVideos = async () => {
       try {
         const res = await fetch(
-          `https://becomebetter-api.azurewebsites.net/api/getAnnotationsByStudent?studentEmail=${studentId}`
+          `https://becomebetter-api.azurewebsites.net/api/GetAnnotationsByStudentCoach?studentEmail=${studentId}&coachEmail=${coachEmail}`
         );
         const data = await res.json();
 
@@ -76,8 +76,8 @@ export default function AnnotatedVideosScreen() {
       }
     };
 
-    if (studentId) fetchVideos();
-  }, [studentId]);
+    if (studentId && coachEmail) fetchVideos();
+  }, [studentId, coachEmail]);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
