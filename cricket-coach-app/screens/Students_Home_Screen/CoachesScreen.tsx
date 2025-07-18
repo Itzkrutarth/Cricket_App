@@ -26,7 +26,9 @@ type Coach = {
   role?: string;
   students: string[];
   isAssigned?: boolean;
+  requestStatus?: "none" | "pending"; // ✅ NEW
 };
+
 
 export default function CoachesScreen() {
   const [loading, setLoading] = useState(true);
@@ -43,60 +45,89 @@ export default function CoachesScreen() {
     "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
   const fetchCoaches = async () => {
-    setLoading(true);
-    try {
-      // 1. Get student record (to fetch assigned coaches)
-      const studentRes = await fetch(
-        `https://becomebetter-api.azurewebsites.net/api/GetUserById?id=${studentId}`
-      );
-      const studentText = await studentRes.text();
-      if (!studentText || studentText.trim() === "") {
-        throw new Error("Empty response from GetUserById API");
-      }
-      const studentData = JSON.parse(studentText);
-      const assignedCoachEmails: string[] =
-        studentData.coaches?.map((c: string) => c.trim().toLowerCase()) || [];
-
-      // 2. Get all coaches
-      const coachRes = await fetch(
-        "https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Coach"
-      );
-      const coachText = await coachRes.text();
-      if (!coachText || coachText.trim() === "") {
-        throw new Error("Empty response from GetUsers API");
-      }
-      const coachesData = JSON.parse(coachText);
-
-      // 3. Format coaches
-      const formatted: Coach[] = coachesData.map((user: any) => ({
-        id: user.id,
-        username: user.username || "unknown",
-        name: user.name || "Unnamed Coach",
-        email: user.email || "",
-        role: user.role || "Coach",
-        photoUrl: user.profilePictureUrl || DEFAULT_PROFILE_PIC,
-        students: user.students || [],
-        isAssigned: assignedCoachEmails.includes(
-          (user.email || "").trim().toLowerCase()
-        ),
-      }));
-      console.log(
-        "📷 Coach photo URLs:",
-        formatted.map((c) => c.photoUrl)
-      );
-      const filtered =
-        viewMode === "my"
-          ? formatted.filter((coach) => coach.isAssigned)
-          : formatted;
-
-      setCoaches(filtered);
-
-      console.log("🎓 Student coaches:", assignedCoachEmails);
-    } catch (err: any) {
-      console.error("❌ Failed to load coaches:", err.message);
+  setLoading(true);
+  try {
+    // 1. Fetch student profile
+    const studentRes = await fetch(
+      `https://becomebetter-api.azurewebsites.net/api/GetUserById?id=${studentId}`
+    );
+    const studentText = await studentRes.text();
+    if (!studentText || studentText.trim() === "") {
+      throw new Error("Empty response from GetUserById API");
     }
-    setLoading(false);
-  };
+    const studentData = JSON.parse(studentText);
+    const assignedCoachEmails: string[] =
+      studentData.coaches?.map((c: string) => c.trim().toLowerCase()) || [];
+
+    // 2. Fetch pending join requests by student
+    // 2. Fetch pending join requests by student
+let joinRequests: any[] = [];
+
+try {
+  const JOIN_REQ_KEY = process.env.EXPO_PUBLIC_GET_JOIN_REQUESTS_KEY;
+const reqRes = await fetch(
+  `https://becomebetter-api.azurewebsites.net/api/GetJoinRequestsByStudentId?studentId=${studentId}&code=${JOIN_REQ_KEY}`
+);
+
+  if (!reqRes.ok) throw new Error("Join request API failed");
+
+  joinRequests = await reqRes.json();
+
+  if (!Array.isArray(joinRequests)) {
+    console.warn("⚠️ Join request response is not an array. Defaulting to []");
+    joinRequests = [];
+  }
+
+  console.log("✅ JoinRequests:", joinRequests);
+} catch (err) {
+  console.error("❌ Failed to fetch or parse joinRequests:", err);
+}
+
+
+
+
+    const pendingCoachEmails: string[] = joinRequests
+  .filter((r: any) => r.status === "pending")
+  .map((r: any) => r.coachId?.trim().toLowerCase());
+
+
+    // 3. Fetch all coaches
+    const coachRes = await fetch(
+      "https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Coach"
+    );
+    const coachText = await coachRes.text();
+    if (!coachText || coachText.trim() === "") {
+      throw new Error("Empty response from GetUsers API");
+    }
+    const coachesData = JSON.parse(coachText);
+
+    // 4. Combine and format
+    const formatted: Coach[] = coachesData.map((user: any) => ({
+      id: user.id,
+      username: user.username || "unknown",
+      name: user.name || "Unnamed Coach",
+      email: user.email || "",
+      role: user.role || "Coach",
+      photoUrl: user.profilePictureUrl || DEFAULT_PROFILE_PIC,
+      students: user.students || [],
+      isAssigned: assignedCoachEmails.includes(user.email?.toLowerCase()),
+      requestStatus: pendingCoachEmails.includes(user.id?.trim().toLowerCase())
+  ? "pending"
+  : "none",
+    }));
+
+    const filtered =
+      viewMode === "my"
+        ? formatted.filter((coach) => coach.isAssigned)
+        : formatted;
+
+    setCoaches(filtered);
+    console.log("📥 Join request coachIds:", pendingCoachEmails);
+  } catch (err: any) {
+    console.error("❌ Failed to load coaches:", err.message);
+  }
+  setLoading(false);
+};
 
   useEffect(() => {
     fetchCoaches();
@@ -147,6 +178,43 @@ export default function CoachesScreen() {
       setAssigningId(null);
     }
   };
+
+  const handleSendJoinRequest = async (coach: Coach) => {
+  setAssigningId(coach.id);
+  try {
+    const payload = {
+  studentId: studentId?.trim(),
+  coachId: coach.id?.trim(),
+};
+
+
+    console.log("📤 Sending join request:", payload);
+    const SEND_JOIN_REQUEST_KEY = process.env.EXPO_PUBLIC_SEND_JOIN_REQUEST_KEY;
+    const res = await fetch(
+  `https://becomebetter-api.azurewebsites.net/api/SendJoinRequest?code=${SEND_JOIN_REQUEST_KEY}`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }
+);
+
+    const text = await res.text();
+    console.log("📩 Response:", text);
+
+    if (!res.ok) throw new Error(text || "Failed to send join request");
+
+    Alert.alert("Request Sent", `Join request sent to ${coach.name}`);
+    await new Promise(resolve => setTimeout(resolve, 800)); // 800ms delay
+    await fetchCoaches(); // Refresh status
+  } catch (err: any) {
+    console.error("❌ SendJoinRequest error:", err.message);
+    Alert.alert("Error", err.message || "Could not send request");
+  } finally {
+    setAssigningId(null);
+  }
+};
+
 
   const removeCoach = (coach: Coach) => {
     Alert.alert(
@@ -274,23 +342,23 @@ export default function CoachesScreen() {
               </TouchableOpacity>
 
               {viewMode === "all" ? (
-                coach.isAssigned ? (
-                  <Text style={{ color: "#28a745", fontWeight: "600" }}>
-                    ✓ Already Added
-                  </Text>
-                ) : (
-                  <TouchableOpacity
-                    style={[styles.button, styles.addButton]}
-                    onPress={() => handleAssignCoach(coach)}
-                    disabled={assigningId === coach.id}
-                  >
-                    {assigningId === coach.id ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <Feather name="user-plus" size={16} color="#fff" />
-                    )}
-                  </TouchableOpacity>
-                )
+  coach.isAssigned ? (
+    <Text style={{ color: "#28a745", fontWeight: "600" }}>✓ Already Added</Text>
+  ) : coach.requestStatus === "pending" ? (
+    <Text style={{ color: "#f39c12", fontWeight: "600"}}>⏳ Pending</Text>
+  ) : (
+    <TouchableOpacity
+      style={[styles.button, styles.addButton]}
+      onPress={() => handleSendJoinRequest(coach)}
+      disabled={assigningId === coach.id}
+    >
+      {assigningId === coach.id ? (
+        <ActivityIndicator color="#fff" size="small" />
+      ) : (
+        <Feather name="user-plus" size={16} color="#fff" />
+      )}
+    </TouchableOpacity>
+  )
               ) : (
                 <TouchableOpacity
                   style={[styles.button, styles.removeButton]}

@@ -66,12 +66,12 @@ const StudentHomeContent = () => {
 	const calculateStats = useCallback((freshCoachCount: number, freshMyCoachCount: number, freshVideos: any[]) => {
 	const upcomingEvents = events.filter((e) => new Date(e.date) >= new Date()).length
 
-	console.log("📊 Calculating stats with:", {
-		coachCount: freshCoachCount,
-		myCoachCount: freshMyCoachCount,
-		videoCount: freshVideos.length,
-		eventCount: events.length,
-	})
+	// console.log("📊 Calculating stats with:", {
+	// 	coachCount: freshCoachCount,
+	// 	myCoachCount: freshMyCoachCount,
+	// 	videoCount: freshVideos.length,
+	// 	eventCount: events.length,
+	// })
 
 	setStats((prev) => ({
 		...prev,
@@ -95,19 +95,15 @@ const StudentHomeContent = () => {
 		if (!response.ok) throw new Error("Failed to fetch coaches")
 
 		const data = await response.json()
-		
 
-		// Make sure studentId exists
 		if (!studentId) {
 			console.warn("⚠️ studentId is undefined")
-			return
+			return []
 		}
 
 		const assigned = data.filter((coach: any) =>
 			coach.students?.includes(studentId)
 		)
-
-		
 
 		const formatted = assigned.map((coach: any) => ({
 			id: coach.id,
@@ -121,15 +117,13 @@ const StudentHomeContent = () => {
 			joinDate: "2025-07-01",
 		}))
 
-// 		setCoaches(formatted)
-// 		setStats((prev) => ({
-// 	...prev,
-	
-// }))
+		return formatted
 	} catch (err) {
 		console.error("❌ Failed to fetch assigned coaches", err)
+		return []
 	}
 }
+
 const fetchStudentVideos = async () => {
 	try {
 		const email = user?.email
@@ -215,17 +209,11 @@ const fetchMyCoachCount = async () => {
 			fetchStudentVideos(),
 		])
 
-		console.log("✅ All data fetched:", {
-			coachCount: coachData,
-			myCoachCount,
-			videoCount: videoData?.length || 0,
-		})
-
 		setCoachCount(coachData)
 		setMyCoachCount(myCoachCount)
+		setCoaches(assignedCoaches)
 		setVideos(videoData)
 
-		// ✅ Use latest values directly
 		calculateStats(coachData, myCoachCount, videoData)
 	} catch (e) {
 		console.error("Init error:", e)
@@ -233,8 +221,6 @@ const fetchMyCoachCount = async () => {
 		setLoading(false)
 	}
 }
-
-
 	init()
 }, [user])
 
@@ -253,17 +239,28 @@ const fetchMyCoachCount = async () => {
 
 
 	const onRefresh = useCallback(async () => {
-		setRefreshing(true)
-		try {
-			// Simulate API refresh
-			await new Promise((resolve) => setTimeout(resolve, 1000))
-			calculateStats()
-		} catch (error) {
-			console.error("Error refreshing data:", error)
-		} finally {
-			setRefreshing(false)
-		}
-	}, [calculateStats])
+	setRefreshing(true)
+	try {
+		const [coachData, myCoachCount, assignedCoaches, videoData] = await Promise.all([
+			fetchCoachCount(),
+			fetchMyCoachCount(),
+			fetchAssignedCoaches(),
+			fetchStudentVideos(),
+		])
+
+		setCoachCount(coachData)
+		setMyCoachCount(myCoachCount)
+		setCoaches(assignedCoaches)
+		setVideos(videoData)
+
+		calculateStats(coachData, myCoachCount, videoData)
+	} catch (error) {
+		console.error("Error refreshing data:", error)
+	} finally {
+		setRefreshing(false)
+	}
+}, [calculateStats])
+
 
 	// Navigation functions
 	const handleMyCoach = () => {
@@ -577,9 +574,8 @@ const fetchMyCoachCount = async () => {
 							</Text>
 							{video.coachId && (
 								<Text style={styles.videoCoach}>
-									By{" "}
-									{coaches.find((c) => c.id === video.coachId)?.name || "Coach"}
-								</Text>
+  {`By ${coaches.find((c) => c.id === video.coachId)?.name ?? "Coach"}`}
+</Text>
 							)}
 						</TouchableOpacity>
 					))}

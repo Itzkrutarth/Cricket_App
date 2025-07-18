@@ -42,45 +42,68 @@ export default function StudentsScreen() {
 	const viewMode = params.viewMode || "my";
 	const DEFAULT_PROFILE_PIC = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 	const coachId = useSelector((state: RootState) => state.user.id);
+	console.log("👨‍🏫 Coach ID:", coachId); // Add this
+	const [coachStudentIds, setCoachStudentIds] = useState<string[]>([]);
+
 
 	const fetchStudents = async () => {
-		setLoading(true);
-		try {
-			const response = await fetch(
-				"https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Player"
-			);
-			const data = await response.json();
+	setLoading(true);
+	try {
+		const [studentRes, coachRes] = await Promise.all([
+			fetch("https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Player"),
+			fetch(`https://becomebetter-api.azurewebsites.net/api/GetUserById?id=${coachId}`)
+		]);
 
-			const formatted: Student[] = data.map((user: any) => {
-				const name = user.name?.trim();
-				return {
-					id: user.id,
-					name: name || "Unnamed Player",
-					username: user.username,
-					email: user.email || "",
-					phoneNumber: user.phoneNumber || "",
-					address: user.address || "",
-					role: user.role || "",
-					experience: user.experience || "",
-					birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
-					gender: user.gender || "",
-					photoUrl: user.profilePictureUrl || DEFAULT_PROFILE_PIC,
-					coaches: user.coaches || [],
-				};
-			});
-
-			const filtered =
-				viewMode === "my"
-					? formatted.filter((s) => s.coaches?.includes(coachId))
-					: formatted;
-
-			setStudents(filtered);
-			router.setParams({ studentCount: filtered.length.toString() });
-		} catch (err) {
-			console.error("❌ Failed to load students", err);
+		if (!studentRes.ok || !coachRes.ok) {
+			throw new Error("Failed to fetch users");
 		}
-		setLoading(false);
-	};
+
+		const playersData = await studentRes.json();
+		const coachData = await coachRes.json();
+
+		// ✅ Step 1: Prepare local & state variables
+		const studentIds: string[] = coachData.students || [];
+		setCoachStudentIds(studentIds);
+
+		// ✅ Step 2: Format student objects
+		const formatted: Student[] = playersData.map((user: any) => {
+			const name = user.name?.trim();
+			return {
+				id: user.id,
+				name: name || "Unnamed Player",
+				username: user.username,
+				email: user.email || "",
+				phoneNumber: user.phoneNumber || "",
+				address: user.address || "",
+				role: user.role || "",
+				experience: user.experience || "",
+				birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
+				gender: user.gender || "",
+				photoUrl: user.profilePictureUrl || DEFAULT_PROFILE_PIC,
+				coaches: user.coaches || [],
+			};
+		});
+
+		// ✅ Step 3: Apply correct filter based on viewMode
+		const filtered =
+			viewMode === "my"
+				? formatted.filter((s) =>
+						studentIds.includes(s.id) || studentIds.includes(s.email ?? "")
+
+				  )
+				: formatted;
+
+		console.log("✅ Coach's assigned students:", studentIds);
+		console.log("🎯 Filtered students:", filtered.map((s) => s.email));
+
+		setStudents(filtered);
+		router.setParams({ studentCount: filtered.length.toString() });
+	} catch (err) {
+		console.error("❌ Failed to load students", err);
+	}
+	setLoading(false);
+};
+
 
 	useEffect(() => {
 		fetchStudents();
@@ -123,44 +146,55 @@ export default function StudentsScreen() {
 	};
 
 	const removeStudent = (student: Student) => {
-		Alert.alert(
-			"Remove Student",
-			`Are you sure you want to remove ${student.name}?`,
-			[
-				{ text: "Cancel", style: "cancel" },
-				{
-					text: "Remove",
-					style: "destructive",
-					onPress: async () => {
-						try {
-							const updatedCoaches = student.coaches.filter((id) => id !== coachId);
+	Alert.alert(
+		"Remove Student",
+		`Are you sure you want to remove ${student.name}?`,
+		[
+			{ text: "Cancel", style: "cancel" },
+			{
+				text: "Remove",
+				style: "destructive",
+				onPress: async () => {
+					try {
+						console.log("🗑 Removing student:", student.id, "from coach:", coachId);
 
-							await fetch(`https://becomebetter-api.azurewebsites.net/api/UpdateUser`, {
+						const updatedCoaches = student.coaches.filter((id) => id !== coachId);
+
+						// Step 1: Remove coach from student doc
+						const updateUserRes = await fetch(
+							`https://becomebetter-api.azurewebsites.net/api/UpdateUser`,
+							{
 								method: "PUT",
 								headers: { "Content-Type": "application/json" },
 								body: JSON.stringify({ id: student.id, coaches: updatedCoaches }),
-							});
+							}
+						);
+						if (!updateUserRes.ok) throw new Error("UpdateUser failed");
 
-							await fetch(
-								`https://becomebetter-api.azurewebsites.net/api/RemoveStudentFromCoach?code=${process.env.EXPO_PUBLIC_REMOVE_STUDENT_KEY}`,
-								{
-									method: "PUT",
-									headers: { "Content-Type": "application/json" },
-									body: JSON.stringify({ coachId, studentId: student.id }),
-								}
-							);
+						// Step 2: Remove student from coach doc
+						const removeLinkRes = await fetch(
+							`https://becomebetter-api.azurewebsites.net/api/RemoveStudentFromCoach?code=${process.env.EXPO_PUBLIC_REMOVE_STUDENT_KEY}`,
+							{
+								method: "PUT",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({ coachId, studentId: student.id }),
+							}
+						);
+						if (!removeLinkRes.ok) throw new Error("RemoveStudentFromCoach failed");
 
-							setStudents((curr) => curr.filter((s) => s.id !== student.id));
-							Alert.alert("Removed", `${student.name} has been removed.`);
-						} catch (err) {
-							console.error("❌ Failed to remove student:", err);
-							Alert.alert("Error", "Failed to remove student from backend.");
-						}
-					},
+						// ✅ Now refetch the latest list from backend
+						await fetchStudents();
+
+						Alert.alert("Removed", `${student.name} has been removed.`);
+					} catch (err) {
+						console.error("❌ Failed to remove student:", err);
+						Alert.alert("Error", "Failed to remove student from backend.");
+					}
 				},
-			]
-		);
-	};
+			},
+		]
+	);
+};
 
 	const openDetails = (student: Student) => {
 		router.push({
@@ -239,31 +273,32 @@ export default function StudentsScreen() {
 							</TouchableOpacity>
 
 							{viewMode === "all" ? (
-								student.coaches.includes(coachId) ? (
-									<Text style={{ color: "#28a745", fontWeight: "600" }}>
-										✓ Already Added
-									</Text>
-								) : (
-									<TouchableOpacity
-										style={[styles.button, styles.addButton]}
-										onPress={() => handleAssignStudent(student)}
-										disabled={assigningId === student.id}
-									>
-										{assigningId === student.id ? (
-											<ActivityIndicator color="#fff" size="small" />
-										) : (
-											<Feather name="user-plus" size={16} color="#fff" />
-										)}
-									</TouchableOpacity>
-								)
-							) : (
-								<TouchableOpacity
-									style={[styles.button, styles.removeButton]}
-									onPress={() => removeStudent(student)}
-								>
-									<Feather name="user-minus" size={16} color="#dc3545" />
-								</TouchableOpacity>
-							)}
+  coachStudentIds.includes(student.id) || coachStudentIds.includes(student.email) ? (
+    <Text style={{ color: "#28a745", fontWeight: "600" }}>
+      ✓ Already Added
+    </Text>
+  ) : (
+    <TouchableOpacity
+      style={[styles.button, styles.addButton]}
+      onPress={() => handleAssignStudent(student)}
+      disabled={assigningId === student.id}
+    >
+      {assigningId === student.id ? (
+        <ActivityIndicator color="#fff" size="small" />
+      ) : (
+        <Feather name="user-plus" size={16} color="#fff" />
+      )}
+    </TouchableOpacity>
+  )
+) : (
+  <TouchableOpacity
+    style={[styles.button, styles.removeButton]}
+    onPress={() => removeStudent(student)}
+  >
+    <Feather name="user-minus" size={16} color="#dc3545" />
+  </TouchableOpacity>
+)}
+
 						</View>
 					))}
 				</ScrollView>

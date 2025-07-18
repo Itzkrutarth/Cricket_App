@@ -307,6 +307,69 @@ const HomeContent = () => {
 			console.error("❌ Failed to fetch student stats", error)
 		}
 	}
+	const fetchJoinRequests = async () => {
+  try {
+    if (!user || !user.email) return;
+
+    const JOIN_REQUEST_CODE = process.env.EXPO_PUBLIC_JOIN_REQUEST_CODE;
+
+    const res = await fetch(
+      `https://becomebetter-api.azurewebsites.net/api/GetJoinRequestsByCoachId?code=${JOIN_REQUEST_CODE}&coachId=${encodeURIComponent(
+        user.email
+      )}`
+    );
+
+    if (!res.ok) {
+      console.error("❌ API failed with status:", res.status);
+      setJoinRequests([]);
+      return;
+    }
+
+    const text = await res.text();
+    if (!text) {
+      console.warn("⚠️ Empty response for join requests");
+      console.log("📩 Coach Email used in fetch:", user?.email);
+      setJoinRequests([]);
+      return;
+    }
+
+    const requests = JSON.parse(text);
+
+    const studentRes = await fetch(
+      "https://becomebetter-api.azurewebsites.net/api/GetUsers?role=Player"
+    );
+    const studentText = await studentRes.text();
+    const studentList = studentText ? JSON.parse(studentText) : [];
+
+    const enriched = requests
+      .filter((r: any) => r.status === "pending")
+      .map((r: any) => {
+        const student = studentList.find((s: any) => s.id === r.studentId);
+        if (!student) return null;
+        return {
+          id: r.id,
+          name: student.name || "Unnamed",
+          role: student.role || "Player",
+          profileUrl:
+            student.profilePictureUrl ||
+            "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+          careerInfo: student.experience || "Aspiring cricketer.",
+          performance: {
+            batting: Math.floor(Math.random() * 100),
+            bowling: Math.floor(Math.random() * 100),
+            fielding: Math.floor(Math.random() * 100),
+          },
+        };
+      })
+      .filter(Boolean);
+
+    setJoinRequests(enriched);
+  } catch (err) {
+    console.error("❌ Failed to fetch join requests:", err);
+    setJoinRequests([]);
+  }
+};
+
 
 	const calculateStats = useCallback(() => {
 		const upcomingEvents = events.filter(
@@ -324,7 +387,7 @@ const HomeContent = () => {
 	useEffect(() => {
 		const loadInitialStats = async () => {
 			await fetchRealStudentCount() // total from API
-
+			await fetchJoinRequests();
 			// Fetch videos dynamically for this coach
 			if (user.email) {
 				const apiVideos = await fetchVideosByCoach(user.email)
@@ -393,51 +456,101 @@ const HomeContent = () => {
 			},
 		})
 	}
-	const handleAcceptRequest = async (id: string) => {
-		try {
-			const request = joinRequests.find((r) => r.id === id)
-			if (request) {
-				const updatedStudent: Student = {
-					...request,
-					isMyStudent: true,
-					joinDate: new Date().toISOString().split("T")[0],
-				}
-				setStudents((prev) => [...prev, updatedStudent])
-				setJoinRequests((prev) => prev.filter((r) => r.id !== id))
-				setSelectedRequest(null)
-				Alert.alert(
-					"Success",
-					`${request.name} has been accepted as your student!`
-				)
+	const handleAcceptRequest = async (requestId: string) => {
+	try {
+		const request = joinRequests.find((r) => r.id === requestId)
+		if (!request) throw new Error("Invalid request")
+
+		const API_KEY = process.env.EXPO_PUBLIC_ACCEPT_JOIN_KEY
+		if (!API_KEY) throw new Error("Missing API key")
+
+		const res = await fetch(
+			`https://becomebetter-api.azurewebsites.net/api/AcceptJoinRequest?code=${API_KEY}`,
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					requestId, // ✅ Only sending requestId now
+				}),
 			}
-		} catch (error) {
-			Alert.alert("Error", "Failed to accept request")
+		)
+
+		const responseText = await res.text()
+		console.log("✅ API response:", responseText)
+
+		if (!res.ok) throw new Error("Failed to accept request")
+
+		// ✅ Update local state
+		const acceptedStudent: Student = {
+			...request,
+			isMyStudent: true,
+			joinDate: new Date().toISOString().split("T")[0],
 		}
+
+		setStudents((prev) => [...prev, acceptedStudent])
+		setJoinRequests((prev) => prev.filter((r) => r.id !== requestId))
+		setSelectedRequest(null)
+		Alert.alert("Success", `${request.name} is now your student!`)
+	} catch (error: any) {
+		console.error("❌ Accept request failed:", error.message || error)
+		Alert.alert("Error", error.message || "Failed to accept the request.")
 	}
-	const handleRejectRequest = async (id: string) => {
-		try {
-			const request = joinRequests.find((r) => r.id === id)
-			if (request) {
-				Alert.alert(
-					"Confirm Rejection",
-					`Are you sure you want to reject ${request.name}'s request?`,
-					[
-						{ text: "Cancel", style: "cancel" },
-						{
-							text: "Reject",
-							style: "destructive",
-							onPress: () => {
-								setJoinRequests((prev) => prev.filter((r) => r.id !== id))
-								setSelectedRequest(null)
-							},
-						},
-					]
-				)
-			}
-		} catch (error) {
-			Alert.alert("Error", "Failed to reject request")
-		}
-	}
+}
+
+const handleRejectRequest = async (requestId: string) => {
+	const request = joinRequests.find((r) => r.id === requestId)
+	if (!request) return
+
+	Alert.alert(
+		"Reject Join Request",
+		`Are you sure you want to reject ${request.name}'s request?`,
+		[
+			{ text: "Cancel", style: "cancel" },
+			{
+				text: "Reject",
+				style: "destructive",
+				onPress: async () => {
+					try {
+						const API_KEY = process.env.EXPO_PUBLIC_REJECT_JOIN_KEY
+						if (!API_KEY) throw new Error("Missing API key")
+
+						const res = await fetch(
+							`https://becomebetter-api.azurewebsites.net/api/RejectJoinRequest?code=${API_KEY}`,
+							{
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
+								},
+								body: JSON.stringify({
+									requestId, // ✅ Only sending requestId
+								}),
+							}
+						)
+
+						const text = await res.text()
+						console.log("✅ Reject API response:", text)
+
+						if (!res.ok) throw new Error("Failed to reject request")
+
+						// ✅ Remove request locally
+						setJoinRequests((prev) => prev.filter((r) => r.id !== requestId))
+						setSelectedRequest(null)
+						Alert.alert("Rejected", `${request.name}'s request was rejected.`)
+					} catch (error: any) {
+						console.error("❌ Reject request failed:", error.message || error)
+						Alert.alert("Error", error.message || "Failed to reject the request.")
+					}
+				},
+			},
+		]
+	)
+}
+
+
+
+
 	const tasks = useSelector((state: RootState) => state.task.tasks)
 	const pendingTasks = tasks.filter((task) => !task.completed)
 	// --------- Event management

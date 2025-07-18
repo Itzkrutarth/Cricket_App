@@ -31,12 +31,17 @@ function AppLayout() {
 				router.replace("/signin")
 			}
 		} else {
-			if (
-				(user.role === "Coach" && pathname !== "/coachhome") ||
-				(user.role === "Player" && pathname !== "/studenthome")
-			) {
-				router.replace(user.role === "Coach" ? "/coachhome" : "/studenthome")
-			}
+			const isCoachPath = pathname?.startsWith("/coachhome")
+const isPlayerPath = pathname?.startsWith("/studenthome")
+
+if (!user.token && pathname !== "/signin") {
+	router.replace("/signin")
+} else if (user.role === "Coach" && !isCoachPath) {
+	router.replace("/coachhome")
+} else if (user.role === "Player" && !isPlayerPath) {
+	router.replace("/studenthome")
+}
+
 		}
 		setAuthChecked(true)
 	}, [user])
