@@ -153,7 +153,7 @@ export default function AnnotatedVideosScreen() {
             </TouchableOpacity>
           ))
         )}
-
+	
         <TouchableOpacity
           style={[styles.recordButton, { marginTop: 20 }]}
           onPress={() => router.back()}

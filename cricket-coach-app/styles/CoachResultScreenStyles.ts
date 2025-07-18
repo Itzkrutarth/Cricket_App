@@ -9,19 +9,12 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 24,
   },
-  thumbnail: {
-    width: 180,
-    height: 100,
-    borderRadius: 10,
-    backgroundColor: "#e0e0e0",
-    marginBottom: 12,
-    resizeMode: "cover",
-  },
   sessionTitle: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#1D4ED8",
     textAlign: "center",
+    marginTop: 20,
   },
   section: {
     marginBottom: 24,
@@ -198,4 +191,24 @@ export const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  videoContainer: {
+  position: 'relative',
+  width: '100%',
+  height: 200,
+  backgroundColor: '#000',
+  borderRadius: 8,
+  overflow: 'hidden',
+},
+playButton: {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: [{ translateX: -25 }, { translateY: -25 }],
+  zIndex: 1,
+},
+thumbnail: {
+  width: '100%',
+  height: 200,
+  borderRadius: 8,
+},
 });

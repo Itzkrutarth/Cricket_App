@@ -495,23 +495,37 @@ const VideoAnnotationScreen = () => {
 		}
 	}
 
-	const goToResultScreen = () => {
-		router.push({
-			pathname: "/coach-home/CoachResultScreen",
-			params: {
-				sessionTitle: title, // from your params or state
-				videoThumbnail: typeof videoSource === "string" ? videoSource : "", // or a generated thumbnail
-				textNotes: "", // replace with your text notes variable if you have one
-				drills: [], // replace with your drills array if you have one
-				videoUri: videoSource,
-				videoId: videoId,
-				studentId: studentId,
-				// ✅ must be passed
-				// ✅ must be passed
-				// voiceNoteUri: voiceNotes[0] || "", // or pass all voiceNotes if needed
-			},
-		})
-	}
+const goToResultScreen = () => {
+  // Get the actual video source properly
+  const realVideoUri = (() => {
+    if (typeof videoSource === "string") {
+      return videoSource.startsWith("http") ? videoSource : "";
+    }
+    if (typeof videoSource === "object" && videoSource !== null && "uri" in videoSource) {
+      return videoSource.uri;
+    }
+    return "";
+  })();
+
+  console.log("🎥 Video URI being passed to result screen:", realVideoUri);
+
+  router.push({
+    pathname: "/coach-home/CoachResultScreen", // ✅ Updated to correct screen name
+    params: {
+      sessionTitle: title ?? "Untitled Session",
+	  videoThumbnail: typeof realVideoUri === "string" ? realVideoUri : "", // ✅ Pass the actual video URI as string
+	  videoUri: typeof realVideoUri === "string" ? realVideoUri : "", // ✅ Also pass as videoUri for backup
+	  textNotes: "",
+	  drills: [],
+	  videoId: videoId,
+	  studentId: studentId,
+	  // Add annotation data if needed by result screen
+	  annotationCount: annotations.length,
+	  frameCount: videoFrames.filter(f => f.annotationCount > 0).length,
+    },
+  });
+};
+
 
 	return (
 		<View style={styles.container}>

@@ -1,12 +1,12 @@
 {
   "bindings": [
     {
-      "authLevel": "anonymous", 
+      "authLevel": "anonymous",
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["post"],
-      "route": "SaveFeedback"
+      "methods": ["get"],
+      "route": "GetFeedbackByVideoId"
     },
     {
       "type": "http",
