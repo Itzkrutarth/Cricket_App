@@ -7,6 +7,7 @@ import {
 	TouchableOpacity,
 	Animated,
 	Alert,
+	ActivityIndicator,
 } from "react-native"
 
 import { useRouter } from "expo-router"
@@ -59,7 +60,7 @@ const deleteVideoById = async (videoId: string) => {
 const AllVideosScreen = () => {
 	const router = useRouter()
 	const [videoData, setVideoData] = useState<any[]>([])
-	const [loading, setLoading] = useState(false)
+	const [loading, setLoading] = useState(true) // Set default to true
 
 	const userEmail = useSelector((state: RootState) => state.user.email)
 
@@ -85,14 +86,10 @@ const AllVideosScreen = () => {
 					setVideoData(sorted)
 					console.log("📹 Fetched Videos:", videos)
 				}
-
-				// ============ ASYNC STORAGE CODE (COMMENTED OUT) ============
-				// const videos = await fetchVideosFromStorage()
-				// setVideoData(videos)
 			} catch (err) {
 				console.error("Error loading data", err)
 			} finally {
-				setLoading(false)
+				setLoading(false) // Set loading to false after fetch
 			}
 		}
 		loadData()
@@ -168,72 +165,89 @@ const AllVideosScreen = () => {
 	return (
 		<View style={styles.container}>
 			<Header title="All Videos" />
-			<FlatList
-				data={videoData || []}
-				keyExtractor={(item) => item.id}
-				numColumns={numColumns}
-				renderItem={({ item }) => {
-					const isFavorite = favorites.includes(item.id)
-					if (!animations[item.id]) animations[item.id] = new Animated.Value(1)
-					return (
-						<View style={[styles.item, { width: itemSize }]}>
-							<View>
-								<TouchableOpacity onPress={() => handleVideoPress(item)}>
-									<Video
-										source={{ uri: item.sasUrl }} // Using uri from API
-										style={styles.thumbnail}
-										resizeMode={ResizeMode.CONTAIN}
-										shouldPlay={false}
-										isLooping={false}
-										isMuted={true}
-									/>
-								</TouchableOpacity>
-								{/* Delete Icon */}
-								<TouchableOpacity
+			{loading ? (
+				<View
+					style={{
+						flex: 1,
+						justifyContent: "center",
+						alignItems: "center",
+					}}
+				>
+					<ActivityIndicator size="large" color="#1D4ED8" />
+					<Text
+						style={{ marginTop: 12, color: "#1D4ED8" }}
+					>
+						Loading videos...
+					</Text>
+				</View>
+			) : (
+				<FlatList
+					data={videoData || []}
+					keyExtractor={(item) => item.id}
+					numColumns={numColumns}
+					renderItem={({ item }) => {
+						const isFavorite = favorites.includes(item.id)
+						if (!animations[item.id]) animations[item.id] = new Animated.Value(1)
+						return (
+							<View style={[styles.item, { width: itemSize }]}>
+								<View>
+									<TouchableOpacity onPress={() => handleVideoPress(item)}>
+										<Video
+											source={{ uri: item.sasUrl }} // Using uri from API
+											style={styles.thumbnail}
+											resizeMode={ResizeMode.CONTAIN}
+											shouldPlay={false}
+											isLooping={false}
+											isMuted={true}
+										/>
+									</TouchableOpacity>
+									{/* Delete Icon */}
+									<TouchableOpacity
+										style={{
+											position: "absolute",
+											top: 8,
+											right: 8,
+											zIndex: 2,
+											backgroundColor: "rgba(255,255,255,0.8)",
+											borderRadius: 16,
+											padding: 2,
+										}}
+										onPress={() => handleDeleteVideo(item.id)}
+									>
+										<Ionicons name="trash" size={20} color="red" />
+									</TouchableOpacity>
+								</View>
+								<Text style={styles.videoTitle}>
+									{item.title || item.id || "Untitled Video"}
+								</Text>
+								<Text
 									style={{
-										position: "absolute",
-										top: 8,
-										right: 8,
-										zIndex: 2,
-										backgroundColor: "rgba(255,255,255,0.8)",
-										borderRadius: 16,
-										padding: 2,
+										color: item.feedbackStatus === "pending" ? "orange" : "green",
+										fontSize: 12,
+										textAlign: "center",
 									}}
-									onPress={() => handleDeleteVideo(item.id)}
 								>
-									<Ionicons name="trash" size={20} color="red" />
+									{item.feedbackStatus === "pending" ? "Pending" : "Reviewed"}
+								</Text>
+								<TouchableOpacity
+									onPress={() => toggleFavorite(item.id)}
+									style={{ alignSelf: "center", marginTop: 5 }}
+								>
+									<Animated.View
+										style={{ transform: [{ scale: animations[item.id] }] }}
+									>
+										<Ionicons
+											name={isFavorite ? "heart" : "heart-outline"}
+											size={20}
+											color={isFavorite ? "red" : "gray"}
+										/>
+									</Animated.View>
 								</TouchableOpacity>
 							</View>
-							<Text style={styles.videoTitle}>
-								{item.title || item.id || "Untitled Video"}
-							</Text>
-							<Text
-								style={{
-									color: item.feedbackStatus === "pending" ? "orange" : "green",
-									fontSize: 12,
-									textAlign: "center",
-								}}
-							>
-								{item.feedbackStatus === "pending" ? "Pending" : "Reviewed"}
-							</Text>
-							<TouchableOpacity
-								onPress={() => toggleFavorite(item.id)}
-								style={{ alignSelf: "center", marginTop: 5 }}
-							>
-								<Animated.View
-									style={{ transform: [{ scale: animations[item.id] }] }}
-								>
-									<Ionicons
-										name={isFavorite ? "heart" : "heart-outline"}
-										size={20}
-										color={isFavorite ? "red" : "gray"}
-									/>
-								</Animated.View>
-							</TouchableOpacity>
-						</View>
-					)
-				}}
-			/>
+						)
+					}}
+				/>
+			)}
 		</View>
 	)
 }

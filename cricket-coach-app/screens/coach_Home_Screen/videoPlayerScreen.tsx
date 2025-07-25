@@ -19,6 +19,8 @@ const VideoPlayerScreen = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [status, setStatus] = useState<AVPlaybackStatus | null>(null);
+  const [videoReady, setVideoReady] = useState(false);
+  const [checking, setChecking] = useState(true);
   const videoRef = useRef<Video>(null);
 
   const userRole = useSelector((state: RootState) => state.user.role); // ✅ check if coach
@@ -53,43 +55,70 @@ const VideoPlayerScreen = () => {
     });
   };
 
+  const checkVideoReady = async (url: string) => {
+    try {
+      const res = await fetch(url, { method: "HEAD" });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  React.useEffect(() => {
+    const check = async () => {
+      if (typeof videoSource === "string" && videoSource.startsWith("http")) {
+        setChecking(true);
+        const ready = await checkVideoReady(videoSource);
+        setVideoReady(ready);
+        setChecking(false);
+      } else {
+        setVideoReady(false);
+        setChecking(false);
+      }
+    };
+    check();
+  }, [videoSource]);
+
   return (
     <View style={styles.container}>
       <StatusBar hidden />
       <Header
         title={"Video"}
-        onEditPress={userRole === "Coach" ? handleEditPress : undefined} // ✅ only coach sees edit icon
+        onEditPress={userRole === "Coach" ? handleEditPress : undefined}
       />
 
-      {/* Video */}
       <View style={styles.videoContainer}>
-        <Video
-          ref={videoRef}
-          key={Array.isArray(params.id) ? params.id[0] : params.id}
-          source={getVideoSource()}
-          style={styles.video}
-          useNativeControls
-          resizeMode={ResizeMode.CONTAIN}
-          isMuted={false}
-          shouldPlay={true}
-          onLoad={() => {
-            console.log("✅ Video loaded");
-            setTimeout(() => {
-              if (videoRef.current) {
-                videoRef.current
-                  .setStatusAsync({ shouldPlay: true, rate: 1 })
-                  .catch((err) => console.error("❌ setStatusAsync error", err));
-              }
-            }, 200);
-          }}
-          onPlaybackStatusUpdate={(status) => {
-            console.log("🎬 Status", status);
-            setStatus(status);
-          }}
-          onError={(e) => {
-            console.error("❌ Error playing video", e);
-          }}
-        />
+        {checking ? (
+          <Text style={{ color: "#fff" }}>Checking video availability...</Text>
+        ) : videoReady ? (
+          <Video
+            ref={videoRef}
+            key={Array.isArray(params.id) ? params.id[0] : params.id}
+            source={getVideoSource()}
+            style={styles.video}
+            useNativeControls
+            resizeMode={ResizeMode.CONTAIN}
+            isMuted={false}
+            shouldPlay={true}
+            onLoad={() => {
+              setTimeout(() => {
+                if (videoRef.current) {
+                  videoRef.current
+                    .setStatusAsync({ shouldPlay: true, rate: 1 })
+                    .catch((err) => console.error("❌ setStatusAsync error", err));
+                }
+              }, 1000);
+            }}
+            onPlaybackStatusUpdate={(status) => setStatus(status)}
+            onError={(e) => {
+              console.error("❌ Error playing video", e);
+            }}
+          />
+        ) : (
+          <Text style={{ color: "#fff" }}>
+            This video is still processing or unavailable. Please try again later.
+          </Text>
+        )}
       </View>
 
       {/* Info */}

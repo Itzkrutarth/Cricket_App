@@ -15,9 +15,10 @@ import {
 } from "react-native"
 import axios from "axios"
 import * as FileSystem from "expo-file-system"
+import * as ImagePicker from "expo-image-picker"
 import { CameraView, useCameraPermissions } from "expo-camera"
 import { Video } from "expo-av"
-import { Entypo } from "@expo/vector-icons"
+import { Entypo, MaterialIcons } from "@expo/vector-icons"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import Header from "./Header_1"
 
@@ -64,6 +65,11 @@ export default function RecordVideoScreen() {
 	const [videoTitle, setVideoTitle] = useState("")
 	const [videoDescription, setVideoDescription] = useState("")
 	const [isUploading, setIsUploading] = useState(false)
+
+	// New state for selected video
+	const [selectedVideoUri, setSelectedVideoUri] = useState<string | null>(null)
+	const [videoDuration, setVideoDuration] = useState(0)
+	const [isVideoSelected, setIsVideoSelected] = useState(false)
 
 	console.log("📍 Screen opened: RecordVideoScreen")
 	console.log("🔑 Route Params - coachId:", coachId)
@@ -172,6 +178,44 @@ export default function RecordVideoScreen() {
 			onFailure()
 		} finally {
 			setIsUploading(false)
+		}
+	}
+
+	// New function to select video from gallery
+	const selectVideoFromGallery = async () => {
+		try {
+			// Request media library permissions
+			const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+			
+			if (status !== 'granted') {
+				Alert.alert(
+					"Permission Required",
+					"Please grant media library access to select videos."
+				)
+				return
+			}
+
+			const result = await ImagePicker.launchImageLibraryAsync({
+				mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+				allowsEditing: true,
+				quality: 0.8,
+				videoMaxDuration: 60, // 1 minute max
+			})
+
+			if (!result.canceled && result.assets[0]) {
+				const selectedVideo = result.assets[0]
+				setSelectedVideoUri(selectedVideo.uri)
+				setRecordedVideoUri(selectedVideo.uri) // Use same state for consistency
+				setVideoDuration(selectedVideo.duration ? Math.round(selectedVideo.duration / 1000) : 0)
+				setIsVideoSelected(true)
+				setShowPreview(true)
+				
+				console.log("✅ Video selected from gallery:", selectedVideo.uri)
+				console.log("📐 Video duration:", selectedVideo.duration)
+			}
+		} catch (error) {
+			console.error("❌ Error selecting video:", error)
+			Alert.alert("Error", "Failed to select video from gallery.")
 		}
 	}
 
@@ -292,6 +336,7 @@ export default function RecordVideoScreen() {
 		}
 
 		setIsRecording(true)
+		setIsVideoSelected(false) // Reset selected video state
 		startRecordingTimer()
 
 		try {
@@ -304,6 +349,7 @@ export default function RecordVideoScreen() {
 
 			const video = await cameraRef.current.recordAsync(recordingOptions)
 			setRecordedVideoUri(video?.uri ?? null)
+			setSelectedVideoUri(null) // Clear selected video
 			setShowPreview(true)
 		} catch (error: any) {
 			Alert.alert(
@@ -362,19 +408,26 @@ export default function RecordVideoScreen() {
 				"_"
 			)}_${timestamp}.mp4`
 
+			// Use appropriate duration based on whether it's recorded or selected
+			const duration = isVideoSelected ? videoDuration : recordingTime
+
 			handleVideoUpload(
 				recordedVideoUri,
 				loggedInUserEmail,
 				assignedCoachId,
 				filename,
 				targetStudent,
-				recordingTime,
+				duration,
 				videoTitle,
 				videoDescription,
 				() => {
 					setShowPreview(false)
 					setVideoTitle("")
 					setVideoDescription("")
+					setRecordedVideoUri(null)
+					setSelectedVideoUri(null)
+					setIsVideoSelected(false)
+					setVideoDuration(0)
 				},
 				() => {}
 			)
@@ -385,6 +438,21 @@ export default function RecordVideoScreen() {
 		setShowPreview(false)
 		setVideoTitle("")
 		setVideoDescription("")
+		setRecordedVideoUri(null)
+		setSelectedVideoUri(null)
+		setIsVideoSelected(false)
+		setVideoDuration(0)
+	}
+
+	// Modified for "Choose Again" functionality
+	const handleChooseAgain = () => {
+		if (isVideoSelected) {
+			// If it was a selected video, go back to video selection
+			selectVideoFromGallery()
+		} else {
+			// If it was a recorded video, go back to recording
+			handleBackToRecord()
+		}
 	}
 
 	if (!permission) {
@@ -542,6 +610,7 @@ export default function RecordVideoScreen() {
 					))}
 				</View>
 
+				{/* Record Button */}
 				<TouchableOpacity
 					onPress={handleRecordButtonPress}
 					disabled={!isReady}
@@ -557,6 +626,19 @@ export default function RecordVideoScreen() {
 						<Entypo name="controller-record" size={36} color="#fff" />
 					)}
 				</TouchableOpacity>
+
+				{/* NEW: Select Video Button */}
+				<TouchableOpacity
+					onPress={selectVideoFromGallery}
+					disabled={isRecording}
+					style={[
+						selectVideoButtonStyle,
+						isRecording && { opacity: 0.5 }
+					]}
+				>
+					<MaterialIcons name="video-library" size={24} color="#fff" />
+					<Text style={selectVideoButtonTextStyle}>Select Video</Text>
+				</TouchableOpacity>
 			</View>
 
 			{/* Video Preview Modal with Form */}
@@ -568,16 +650,16 @@ export default function RecordVideoScreen() {
 			>
 				<View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
 					<View style={modalHeaderStyles.header}>
-	<TouchableOpacity 
-		onPress={() => setShowPreview(false)}
-	>
-		<Entypo name="chevron-left" size={30} color="#1D4ED8" />
-	</TouchableOpacity>
-	<Text style={modalHeaderStyles.title}>
-		Video Details
-	</Text>
-	<View style={{ width: 30 }} /> {/* For symmetrical spacing */}
-</View>
+						<TouchableOpacity 
+							onPress={() => setShowPreview(false)}
+						>
+							<Entypo name="chevron-left" size={30} color="#1D4ED8" />
+						</TouchableOpacity>
+						<Text style={modalHeaderStyles.title}>
+							Video Details
+						</Text>
+						<View style={{ width: 30 }} /> {/* For symmetrical spacing */}
+					</View>
 
 					<View style={{ flex: 1, marginTop: 100 }}>
 						{recordedVideoUri && (
@@ -683,10 +765,10 @@ export default function RecordVideoScreen() {
 						</TouchableOpacity>
 
 						<TouchableOpacity
-							onPress={handleBackToRecord}
+							onPress={handleChooseAgain}
 							disabled={isUploading}
 							style={{
-								backgroundColor: "rgba(255, 0, 0, 0.9)",
+								backgroundColor: "rgba(255, 165, 0, 0.9)", // Orange color
 								paddingHorizontal: 24,
 								paddingVertical: 12,
 								borderRadius: 25,
@@ -695,11 +777,15 @@ export default function RecordVideoScreen() {
 								opacity: isUploading ? 0.6 : 1,
 							}}
 						>
-							<Entypo name="controller-record" size={20} color="white" />
+							<MaterialIcons 
+								name={isVideoSelected ? "video-library" : "videocam"} 
+								size={20} 
+								color="white" 
+							/>
 							<Text
 								style={{ color: "white", marginLeft: 8, fontWeight: "bold", fontSize: 16 }}
 							>
-								Record Again
+								{isVideoSelected ? "Choose Again" : "Record Again"}
 							</Text>
 						</TouchableOpacity>
 					</View>
@@ -724,6 +810,27 @@ const quickZoomTextStyle = {
 	fontSize: 14,
 	fontWeight: "bold" as const,
 }
+
+// NEW: Select Video Button Styles
+const selectVideoButtonStyle = {
+	backgroundColor: "rgba(0, 123, 255, 0.9)", // Blue color
+	paddingHorizontal: 20,
+	paddingVertical: 15,
+	borderRadius: 25,
+	flexDirection: "row" as const,
+	alignItems: "center" as const,
+	justifyContent: "center" as const,
+	marginTop: 15,
+	minWidth: 150,
+}
+
+const selectVideoButtonTextStyle = {
+	color: "white",
+	marginLeft: 8,
+	fontSize: 16,
+	fontWeight: "bold" as const,
+}
+
 const modalHeaderStyles = StyleSheet.create({
 	header: {
 		backgroundColor: "#fff",
