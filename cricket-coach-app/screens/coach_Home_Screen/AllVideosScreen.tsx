@@ -147,16 +147,6 @@ const AllVideosScreen = () => {
 					} else {
 						Alert.alert("Error", "Failed to delete video.")
 					}
-
-					// ============ ASYNC STORAGE DELETE CODE (COMMENTED OUT) ============
-					// const success = await deleteVideoFromStorage(videoId)
-					// if (success) {
-					// 	setVideoData((prev) =>
-					// 		prev.filter((v) => v.id !== videoId)
-					// 	)
-					// } else {
-					// 	Alert.alert("Error", "Failed to delete video.")
-					// }
 				},
 			},
 		])
@@ -174,9 +164,7 @@ const AllVideosScreen = () => {
 					}}
 				>
 					<ActivityIndicator size="large" color="#1D4ED8" />
-					<Text
-						style={{ marginTop: 12, color: "#1D4ED8" }}
-					>
+					<Text style={{ marginTop: 12, color: "#1D4ED8" }}>
 						Loading videos...
 					</Text>
 				</View>
@@ -187,7 +175,8 @@ const AllVideosScreen = () => {
 					numColumns={numColumns}
 					renderItem={({ item }) => {
 						const isFavorite = favorites.includes(item.id)
-						if (!animations[item.id]) animations[item.id] = new Animated.Value(1)
+						if (!animations[item.id])
+							animations[item.id] = new Animated.Value(1)
 						return (
 							<View style={[styles.item, { width: itemSize }]}>
 								<View>
@@ -222,7 +211,8 @@ const AllVideosScreen = () => {
 								</Text>
 								<Text
 									style={{
-										color: item.feedbackStatus === "pending" ? "orange" : "green",
+										color:
+											item.feedbackStatus === "pending" ? "orange" : "green",
 										fontSize: 12,
 										textAlign: "center",
 									}}

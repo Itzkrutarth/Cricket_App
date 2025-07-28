@@ -6,7 +6,7 @@ import { Alert, Image, Text, TouchableOpacity, View } from "react-native"
 import { styles } from "../../styles/CoachDrawerStyles"
 import { useDispatch, useSelector } from "react-redux"
 import { clearUser } from "@/store/userSlice"
-import { RootState } from "@/store"
+import { RootState } from "@/store/store"
 
 const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 	navigation,
@@ -27,9 +27,6 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 	}
 	function handlePersonalInfo(): void {
 		router.push("/coach-home/personalinfo_screen")
-	}
-	function handleAllPicture(): void {
-		router.push("/coach-home/AllPictureScreen")
 	}
 	function handleAllvideos(): void {
 		router.push("/coach-home/AllVideoScreen")
@@ -86,14 +83,6 @@ const CoachDrawerContent: React.FC<DrawerContentComponentProps> = ({
 			>
 				<Feather name="video" size={20} color="#1D4ED8" />
 				<Text style={styles.menuText}>All Videos</Text>
-			</TouchableOpacity>
-
-			<TouchableOpacity
-				onPress={() => handleAllPicture()}
-				style={styles.menuItem}
-			>
-				<Feather name="image" size={20} color="#1D4ED8" />
-				<Text style={styles.menuText}>All Pictures</Text>
 			</TouchableOpacity>
 
 			<TouchableOpacity
